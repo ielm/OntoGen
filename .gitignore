@@ -1,0 +1,15 @@
+__pycache__/
+.Python
+env/
+build/
+dist/
+eggs/
+.eggs/
+sdist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+.idea
+
+demo
