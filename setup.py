@@ -1,0 +1,30 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="OntoGen",
+    version="0.0.4",
+    packages=find_packages(),
+
+    install_requires=[
+        "OntoGraph",
+        "OntoAgent",
+        "OntoGraph-OntoLang",
+        "leialexicon",
+        "leiaschemata",
+        "leiaontology",
+        "Flask",
+        "Flask-Cors",
+        "Flask-SocketIO",
+        "requests",
+        "nlglib"
+    ],
+
+    author="Ivan Leon",
+    author_email="leoni@rpi.edu",
+    description="LEIA natural language generation service",
+    keywords="NLG",
+    project_urls={
+        "Documentation": "https://app.nuclino.com/LEIA/OntoGen/",
+        "Source Code": "https://bitbucket.org/ielm/OntoGen/src/master/",
+    }
+)
