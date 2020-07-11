@@ -1,0 +1,38 @@
+// Text: Jake, get the red block.
+
+@TMR1.REQUEST_ACTION.1 = {
+  AGENT        @TMR1.ROBOT.1;
+  BENEFICIARY  @TMR1.HUMAN.1;
+  INSTANCE-OF  @ONT.REQUEST-ACTION;
+  THEME        @TMR1.ACQUIRE.1;
+  MODALITY     @TMR1.MOOD.1;
+  TMR-ROOT     True;
+};
+
+@TMR1.ACQUIRE.1  = {
+  INSTANCE-OF  @ONT.ACQUIRE;
+  THEME        @TMR1.OBJECT.1;
+  AGENT        @TMR1.HUMAN.1;
+};
+
+@TMR1.HUMAN.1  = {
+  INSTANCE-OF  @ONT.HUMAN;
+  HAS-NAME     "Jake";
+};
+
+@TMR1.OBJECT.1 = {
+  COLOR        "RED";
+  INSTANCE-OF  @ONT.OBJECT;
+  SHAPE        "BLOCKLIKE";
+};
+
+@TMR1.MOOD.1 = {
+  INSTANCE-OF  @ONT.MOOD;
+  SCOPE        @TMR1.ACQUIRE.1;
+  TYPE         "IMPERATIVE";
+  VALUE        1;
+};
+
+@TMR1.ROBOT.1  = {
+  INSTANCE-OF  @ONT.ROBOT;
+};

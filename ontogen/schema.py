@@ -38,7 +38,7 @@ def select_schema(speech_act: str, tmr: Union[TMR, None]):
                 schema_candidates.append(schema)
         if len(schema_candidates) == 1:
             return schema_candidates[0]
-        elif schema_candidates == []:
-        	return None
+        elif not schema_candidates:
+            return None
         else:
             return schema_candidates
