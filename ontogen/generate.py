@@ -10,29 +10,27 @@ from ontogen.schema import select_schema
 from ontograph import graph
 
 
-def generate(input: Union[str, TMR]=None, debug: bool = False):
-
+def generate(input: Union[str, TMR] = None):
     if input is None:
         raise TypeError("Can't generate from nothing.")
-    if debug: 
-        print(list(map(lambda c: (c.id, c.debug()), tmr.constituents())))       
 
-    # schema = input(input)
+    # Handle input cases
     handled_input = handle_input(input)
+
+    # If input is a correct TMR
     if isinstance(handled_input, TMR):
-        if debug: 
-            print(handled_input.root().id)
 
-        schema = handle_schema_selection(handled_input)
+        # Select a satisfactory schema
+        speech_act = handled_input.root().id.split(".")[1].replace("-", "_")
+        schema = select_schema(speech_act, handled_input)
 
+        # Lexicalize schema elements
         schema = lexicalize(schema, handled_input)
-        if debug:
-            print(list(map(lambda c: (c.id, c.debug()), schema.constituents())))
 
+        # Realize utterance with SimpleNLG
         realization = realize(schema)
-        if debug:
-            print(realization)
 
+        # Wrap realized utterance in a SpeechSignal
         speech_signal = realization
         # speech_signal = to_signal(realization)
         # if debug:
@@ -40,41 +38,28 @@ def generate(input: Union[str, TMR]=None, debug: bool = False):
 
         return speech_signal
 
-    elif isinstance(handled_input, str):  # will just be a string for now, will convert to signal later
+    # If input is a literal string 
+    elif isinstance(handled_input, str):
+        # Wrap input in a SpeechSignal
         print(handled_input)
-        if debug: 
-            print(f"Printing literal string: {handled_input}")
-        exit()
+        return handled_input
 
     else:
         raise TypeError("Something went wrong.")
 
 
 def handle_input(input: Union[str, TMR] = None):
-
     if isinstance(input, str):
-        if input[0] == "@":  # is input a TMR pointer
+        if input[0] == "@":
             parsed = Identifier.parse(input)
             parsed_id = f"@{parsed[0]}.{parsed[1]}.{parsed[2]}"
             if (parsed_id in graph) and (parsed[1] == "TMR"):
                 input = TMR(graph[parsed_id])
             else:
                 raise TypeError("Input must be a pointer to a TMR.")
-        else:  # is input a literal string
+        else:
+            # Do literal string stuff here.
             pass
 
     return input
-
-
-def handle_schema_selection(tmr: TMR):
-    if isinstance(tmr, TMR):
-        speech_act = tmr.root().id.split(".")[1].replace("-", "_")
-        schema = select_schema(speech_act, tmr)
-        return schema
-    return None
-
-
-
-
-
 

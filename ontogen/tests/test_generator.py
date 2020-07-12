@@ -10,7 +10,8 @@ from schema.schema import Schema
 from pymongo import MongoClient
 
 from ontogen.generate import generate, handle_input, handle_schema_selection
-from ontogen.tests.mock_schema import mockSchema
+from ontogen.schema import select_schema
+
 
 from ontograph import graph
 
@@ -65,7 +66,8 @@ class GeneratorTestCase(TestCase):
         tmr = TMR.instance(root_type="@ONT.REQUEST_ACTION")
         tmr.set_root(Frame("@TMR1.REQUEST_ACTION.1"))
         test_input = handle_input(tmr)
-        test_schema = handle_schema_selection(test_input)
+        speech_act = tmr.root().id.split(".")[1].replace("-", "_")
+        test_schema = select_schema(speech_act, tmr)
 
         self.assertTrue(isinstance(test_input, TMR))
         self.assertTrue(isinstance(test_schema, Schema))
