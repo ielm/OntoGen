@@ -3,6 +3,7 @@
 OntoGraph==1.0.0
 OntoAgent==4.0.0
 OntoGraph-OntoLang==1.0.0
+OntoGraph-PSQL==1.0.0
 leialexicon
 leiaschemata
 leiaontology
