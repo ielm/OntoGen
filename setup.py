@@ -21,10 +21,10 @@ setup(
 
     author="Ivan Leon",
     author_email="leoni@rpi.edu",
-    description="LEIA natural language generation service",
+    description="LEIA natural language generation module",
     keywords="NLG",
     project_urls={
-        "Documentation": "https://app.nuclino.com/LEIA/OntoGen/",
-        "Source Code": "https://bitbucket.org/ielm/OntoGen/src/master/",
+        "Documentation": "https://bitbucket.org/leia-rpi/OntoGen/wiki/Home",
+        "Source Code": "https://bitbucket.org/leia-rpi/OntoGen/",
     }
-)
+) 
