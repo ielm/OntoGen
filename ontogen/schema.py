@@ -1,4 +1,5 @@
 from typing import Union
+import random
 
 from ontoagent.engine.xmr import TMR
 from ontograph.Frame import Frame
@@ -8,6 +9,7 @@ from lex.lexicon import Lexicon
 from lex.lexeme import Lexeme
 
 from ontogen.wordcache import WordCache
+from ontogen.utils import is_speech_act, get_tmr_element
 
 speech_acts = ["REQUEST-ACTION", "REQUEST-INFO", "INFORM"]
 features = ["MOOD", "SET"]
@@ -23,14 +25,14 @@ def select_schema(speech_act: str, tmr: Union[TMR, None]):
         [] - 
     """
 
-
     # Get initial schema candidate list
     schemata = Repo().get_cat(cat=speech_act)
     # schemata = {}
 
     # Build each schema candidate
     for key in schemata.keys():
-        s = Schema.build(schemata[key], tmr)
+        s = Schema.build(schemata[key])
+        s = link_tmr(s, tmr)
         schemata[key] = s
 
     if tmr is not None:
@@ -46,13 +48,16 @@ def select_schema(speech_act: str, tmr: Union[TMR, None]):
 
             # Get the head of the schema
             schema = schemata[key]
-            schema_head = schema.element('HEAD')
+            schema_head = schema.element("HEAD")
 
             # Get potential lexeme candidates for the schema head
-            tmr_head_candidates = [l for l in tmr_head_candidates if l['CAT'] == schema_head["CAT"].singleton()]
+            tmr_head_candidates = [
+                l for l in tmr_head_candidates
+                if l["CAT"] == schema_head["CAT"].singleton()
+            ]
 
             # Add tmr_head to the tmr_element slot of the schema head
-            schema.add_tmr_element('HEAD', tmr_head)
+            schema.add_tmr_element("HEAD", tmr_head)
 
             # Intersect schema head with tmr_head_candidates
             schema_head_candidates = schema.intersect(schema_head, tmr_head_candidates)
@@ -71,57 +76,15 @@ def select_schema(speech_act: str, tmr: Union[TMR, None]):
 
         # System cannot choose a single schema
         else:
-            return schema_candidates
+            return random.choice(schema_candidates)  # Choose a random one
 
 
-def link_tmr(schema: Schema, tmr: TMR): 
+def link_tmr(schema: Schema, tmr: TMR) -> Schema:
     """
-    Link each Schema element with it's respective TMR element. 
-
-    TODO: 
-        [] - Move is_speech_act and get_tmr_element to lexicalization
-        [] - Separate tmr linking and lexicalization?
+    Link each Schema element with its respective TMR element. 
     """
-    
-    def is_speech_act(elem: Union[str, Frame]):
-        """
-        Determine if a given element is a speech act. 
 
-        TODO: 
-            [] - Update speech act list
-            [] - Do ontological lookup rather than string matching
-            [] - Should this method be pulled out for other usage? maybe in utils?
-        """
-
-        s = elem.id if isinstance(elem, Frame) else elem
-        return True if True in list(map(lambda sa: sa in s, speech_acts)) else False
-    
-    def get_tmr_element(schema_element: Frame, tmr: TMR):
-        """
-        Get respective TMR element for a given schema element.
-
-        TODO: 
-            [] - Update rules for element matching
-        """
-
-        # Hard rules for which Schema elements match which TMR elements.
-        if is_speech_act(schema_element):
-            if tmr.root().id.split(".")[1].replace("-", "_") in schema_element.id:
-                return tmr.root()
-        elif "SUBJECT" in schema_element.id:
-            return tmr.root()["THEME"].singleton()["AGENT"].singleton()
-        elif "HEAD" in schema_element.id:
-            return tmr.root()["THEME"].singleton()
-        elif "DIRECTOBJECT" in schema_element.id:
-            root = tmr.root()["THEME"].singleton()
-            return root["THEME"].singleton()
-        elif "OBJECT" in schema_element.id:
-            root = tmr.root()["THEME"].singleton()
-            return root["DESTINATION"].singleton()
-        return None
-
-
-    for element in schema.constituents():
+    for element in schema.elements():
         # Get TMR element for each Schema element
         tmr_element = get_tmr_element(element, tmr)
 
@@ -129,18 +92,19 @@ def link_tmr(schema: Schema, tmr: TMR):
         if tmr_element is not None:
             # Update tmr_element slot for the respective Schema element
             element["TMR_ELEMENT"] = tmr_element
-            
+
             # Get element id
-            elemid = element["TMR_ELEMENT"].singleton().id.split(".")[1].replace("-", "_")
-            
-            # Lexicalize element if element is not root (Speech Act)        
+            elemid = (
+                element["TMR_ELEMENT"].singleton().id.split(".")[1].replace("-", "_")
+            )
+
+            # Lexicalize element if element is not root (Speech Act)
             if elemid not in schema.root().id:
                 # If element realization is cached in WordCache
-                if elemid in WordCache:  
-
-                    # Do word selection and stuff here. NOTE: THIS WILL BE MOVED 
-                    wordtag = WordCache[elemid][0]  
-                    if '@' in wordtag:
+                if elemid in WordCache:
+                    # Do word selection and stuff here. NOTE: THIS WILL BE MOVED
+                    wordtag = WordCache[elemid][0]
+                    if "@" in wordtag:
                         word = Lexeme.from_frame(wordtag)
                         element["LEX"] = word.anchor
                     else:
@@ -152,5 +116,7 @@ def link_tmr(schema: Schema, tmr: TMR):
                             element["LEX"] = wordtag
 
         elif "ROOT-WORD" in element:
-            word =  Lexeme.build(Lexicon().get_sense(element["ROOT-WORD"].singleton()))
+            word = Lexeme.build(Lexicon().get_sense(element["ROOT-WORD"].singleton()))
             element["LEX"] = word.anchor
+
+    return schema

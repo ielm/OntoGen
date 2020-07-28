@@ -38,7 +38,7 @@ def generate(input: Union[str, TMR] = None):
 
         return speech_signal
 
-    # If input is a literal string 
+    # If input is a literal string
     elif isinstance(handled_input, str):
         # Wrap input in a SpeechSignal
         print(handled_input)
@@ -62,4 +62,3 @@ def handle_input(input: Union[str, TMR] = None):
             pass
 
     return input
-

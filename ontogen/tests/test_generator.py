@@ -1,5 +1,6 @@
 from unittest import TestCase
 from pathlib import Path
+from pprint import pprint
 import os
 
 from ontoagent.engine.xmr import TMR
@@ -9,7 +10,7 @@ from schema.api import SchemaAPI
 from schema.schema import Schema
 from pymongo import MongoClient
 
-from ontogen.generate import generate, handle_input, handle_schema_selection
+from ontogen.generate import generate, handle_input
 from ontogen.schema import select_schema
 
 
@@ -20,7 +21,6 @@ ROOT_DIR = Path(f"{os.path.abspath(__file__)}").parent.parent
 
 
 class GeneratorTestCase(TestCase):
-
     def setUp(self):
         import schema.management
         import os
@@ -56,7 +56,7 @@ class GeneratorTestCase(TestCase):
 
         test_input = handle_input(tmr)
         self.assertTrue(isinstance(test_input, TMR))
-        
+
     def test_select_schema(self):
         with open(f"{ROOT_DIR}/tests/resources/gettheredblock.knowledge", "r") as f:
             s = f.read()
@@ -81,4 +81,3 @@ class GeneratorTestCase(TestCase):
 
     def test_generation(self):
         pass
-
