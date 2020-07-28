@@ -16,7 +16,8 @@ class OntoGenOntoLang(OntoLang):
 
     def load_knowledge(self, package: str, resource: str):
         from pkgutil import get_data
-        input: str = get_data(package, resource).decode('ascii')
+
+        input: str = get_data(package, resource).decode("ascii")
 
         if package + "." + resource in OntoGenOntoLang.cached_processors:
             processors = OntoGenOntoLang.cached_processors[package + "." + resource]
@@ -30,11 +31,10 @@ class OntoGenOntoLang(OntoLang):
 
 
 class OntoGenOntoLangTransformer(OntoLangTransformer):
-
     def clazz(self, matches) -> Type:
         index = matches[0].rfind(".")
         module = matches[0][0:index]
-        clazz = matches[0][index + 1:]
+        clazz = matches[0][index + 1 :]
         __import__(module)
 
         return getattr(sys.modules[module], clazz)
