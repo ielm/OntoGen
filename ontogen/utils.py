@@ -1,32 +1,76 @@
 from pkg_resources import resource_listdir
 from pkgutil import get_data
-from typing import List
+from typing import List, Union
 import re
 
-from ontoagent.utils.analysis import TextAnalyzer
+# from ontoagent.utils.analysis import TextAnalyzer
 from ontoagent.engine.xmr import TMR
-from ontograph .Frame import Frame
-from ontograph.Query import AndComparator, ExistsComparator, InSpaceComparator, Query, SelectPipeline  
+from ontograph.Frame import Frame
+from ontograph.Query import (
+    AndComparator,
+    ExistsComparator,
+    InSpaceComparator,
+    Query,
+    SelectPipeline,
+)
 
 from ontograph import graph
 
-analyzer = TextAnalyzer()
+
+def is_speech_act(elem: Union[str, Frame]):
+    """
+    Determine if a given element is a speech act. 
+
+    TODO: 
+        [] - Update speech act list
+        [] - Do ontological lookup rather than string matching
+    """
+    speech_acts = ["REQUEST-ACTION", "REQUEST-INFO", "INFORM"]
+    s = elem.id if isinstance(elem, Frame) else elem
+    return True if True in list(map(lambda sa: sa in s, speech_acts)) else False
+
+
+def get_tmr_element(schema_element: Frame, tmr: TMR):
+    """
+        Get respective TMR element for a given schema element.
+
+        TODO: 
+            [] - Update rules for element matching
+        """
+
+    # Hard rules for which Schema elements match which TMR elements.
+    if is_speech_act(schema_element):
+        if tmr.root().id.split(".")[1].replace("-", "_") in schema_element.id:
+            return tmr.root()
+    elif "SUBJECT" in schema_element.id:
+        return tmr.root()["THEME"].singleton()["AGENT"].singleton()
+    elif "HEAD" in schema_element.id:
+        return tmr.root()["THEME"].singleton()
+    elif "DIRECTOBJECT" in schema_element.id:
+        root = tmr.root()["THEME"].singleton()
+        return root["THEME"].singleton()
+    elif "OBJECT" in schema_element.id:
+        root = tmr.root()["THEME"].singleton()
+        return root["DESTINATION"].singleton()
+    return None
 
 
 def dict_to_signal(tmr: dict):
     ontosem = ontosem_to_ontolang(tmr["results"][0])
     # print(ontosem)
-    analyzer.cache(tmr["OriginalSentence"], ontosem)
-    tmr = analyzer.to_signal(tmr["OriginalSentence"])
+    # analyzer.cache(tmr["OriginalSentence"], ontosem)
+    # tmr = analyzer.to_signal(tmr["OriginalSentence"])
+
     return tmr
 
 
 def cache_tmrs():
     cache_package = "demo.tmr_cache"
 
-    tmrs = map(lambda f: (cache_package, f), 
-                filter(lambda f: f.endswith(".knowledge"), 
-                        resource_listdir(cache_package, '')))
+    tmrs = map(
+        lambda f: (cache_package, f),
+        filter(lambda f: f.endswith(".knowledge"), resource_listdir(cache_package, "")),
+    )
     tmrs = map(lambda t: get_data(t[0], t[1]).decode("utf-8"), tmrs)
 
     def extract_utterances(tmr: str) -> List[str]:
@@ -51,8 +95,15 @@ def cache_tmrs():
 def ontosem_to_ontolang(_tmr: dict) -> str:
     tmr = _tmr["TMR"]
 
-    inverses = Query(AndComparator([InSpaceComparator("ONT"), ExistsComparator(slot="INVERSE")])).flatten().filter(
-        str).select(SelectPipeline.Column.FILLER).start()
+    inverses = (
+        Query(
+            AndComparator([InSpaceComparator("ONT"), ExistsComparator(slot="INVERSE")])
+        )
+        .flatten()
+        .filter(str)
+        .select(SelectPipeline.Column.FILLER)
+        .start()
+    )
 
     found_ids = set()
     built_ids = set()
@@ -81,9 +132,21 @@ def ontosem_to_ontolang(_tmr: dict) -> str:
                 return _fix_frame_id(value)
 
             # TODO - check for ontology existence
-            if _property.upper() in ["AGENT", "BENEFICIARY", "THEME", "INSTRUMENT", "MODALITY", "SCOPE", "ATTRIBUTED-TO", "DESTINATION", "DOMAIN", "INSTANCE-OF", "RANGE"]:
+            if _property.upper() in [
+                "AGENT",
+                "BENEFICIARY",
+                "THEME",
+                "INSTRUMENT",
+                "MODALITY",
+                "SCOPE",
+                "ATTRIBUTED-TO",
+                "DESTINATION",
+                "DOMAIN",
+                "INSTANCE-OF",
+                "RANGE",
+            ]:
                 return _fix_frame_id(value)
-            return "\"%s\"" % value
+            return '"%s"' % value
         return value
 
     def _convert_frame(frame: str, contents: dict) -> str:
@@ -104,7 +167,10 @@ def ontosem_to_ontolang(_tmr: dict) -> str:
                 else:
                     properties.append("INSTANCE-OF @ONT.%s;" % value)
 
-        return "%s = {\n%s\n};" % (frame_id, "\n".join(map(lambda p: "\t" + p, properties)))
+        return "%s = {\n%s\n};" % (
+            frame_id,
+            "\n".join(map(lambda p: "\t" + p, properties)),
+        )
 
     for key in tmr.keys():
         if key.lower() == key:
