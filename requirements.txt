@@ -1,0 +1,10 @@
+--extra-index-url https://pypi.trulysmartagents.org/
+
+OntoGraph==1.0.1
+leialexicon
+leiaontology
+Flask
+Flask-Cors
+Flask-SocketIO
+requests
+nlglib
