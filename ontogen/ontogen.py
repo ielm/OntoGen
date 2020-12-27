@@ -3,8 +3,6 @@ from ontograph import graph
 from lex.lexicon import Lexicon
 from ont.ontology import Ontology
 
-
-
 from ontogen.utils.oTMR import oTMR
 
 
