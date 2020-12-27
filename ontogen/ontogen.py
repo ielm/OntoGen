@@ -2,7 +2,7 @@ from ontograph.Frame import Frame
 from ontograph import graph
 from lex.lexicon import Lexicon
 from ont.ontology import Ontology
-from schema.repository import Repository
+
 
 
 from ontogen.utils.oTMR import oTMR
