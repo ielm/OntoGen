@@ -58,6 +58,5 @@ class OntoGenRunner:
 if __name__ == '__main__':
     with open("knowledge/sample_otmrs/Could_you_get_the_red_block.json", "r") as file:
         data = json.load(file, object_pairs_hook=OrderedDict)
-
     pprint(data)
 
