@@ -4,6 +4,7 @@ from pprint import pprint
 
 from typing import List
 from collections import OrderedDict
+from lex.lexicon import Lexicon
 
 
 def boostrap_speech_act_cxs() -> dict:
@@ -26,8 +27,16 @@ def get_cx_by_speech_act(cxs: dict = None, speech_act: str = None) -> List:
 if __name__ == "__main__":
     sa = "REQUEST-ACTION"
     cxs = get_cx_by_speech_act(speech_act=sa)
-    print(f"There are {len(cxs)} cxs for {sa}:")
+    print(f"There are {len(cxs)} cxs for {sa} in the local cx repo:")
     i = 1
     for c in cxs: 
-    	print(f"\t{i}. {c['SENSE']}\t->  {c['EX']}")
+    	print(f"\t{i}.\t{c['SENSE']}     \t->  {c['EX']}")
     	i += 1
+
+    lcxs = Lexicon().sem_search(sa)
+
+    j = 1 
+    print(f"There are {len(lcxs)} cxs for {sa} in the Lexicon:")
+    for lc in lcxs: 
+    	print(f"\t{j}.\t{lc['SENSE']}    \t->  {lc['EX']}")
+    	j += 1
