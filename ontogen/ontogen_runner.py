@@ -1,12 +1,16 @@
-from ontograph.Frame import Frame
-from ontograph import graph
+from ontogen.engine.otmr import oTMR
+
 from lex.lexicon import Lexicon
 from ont.ontology import Ontology
+from ontograph.Frame import Frame
+from ontograph import graph
 
-from ontogen.utils.oTMR import oTMR
-
-
+from typing import Union
+from collections import OrderedDict
 from pprint import PrettyPrinter, pprint
+
+import json
+
 
 """
 OntoGen is the NLG service module for OntoAgent. 
@@ -41,5 +45,19 @@ class OntoGenRunner:
         self.is_robot = is_robot
         self.robot_args = robot_args if robot_args is not None else {}
 
-    def run(self, otmr: oTMR, debug: bool = False):
+    def run(self, otmr: Union[oTMR, OrderedDict], debug: bool = False):
+        if isinstance(otmr, OrderedDict):
+            # convert otmr to oTMR 
+            pass
+        
+
         return "oTMR successfully input!"
+
+
+
+if __name__ == '__main__':
+    with open("knowledge/sample_otmrs/Could_you_get_the_red_block.json", "r") as file:
+        data = json.load(file, object_pairs_hook=OrderedDict)
+
+    pprint(data)
+
