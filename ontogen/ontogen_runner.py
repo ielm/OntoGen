@@ -29,15 +29,13 @@ the specified return type, which can be:
       in memory by OntoGen. 
 """
 class OntoGenRunner:
-    def __init__(
-        self,
-        log: int = 0,
-        dc: int = 0,
-        dmp: int = 0,
-        return_one_result: int = 0,
-        is_robot: int = 0,
-        robot_args: dict = None,
-    ):
+    def __init__(self,
+                 log: int = 0,
+                 dc: int = 0,
+                 dmp: int = 0,
+                 return_one_result: int = 0,
+                 is_robot: int = 0,
+                 robot_args: dict = None) -> 'OntoGenRunner':
         self.log = log  # log process and results
         self.dc = dc  # display constraint matches
         self.dmp = dmp  # display meaning procedure
@@ -45,18 +43,22 @@ class OntoGenRunner:
         self.is_robot = is_robot
         self.robot_args = robot_args if robot_args is not None else {}
 
-    def run(self, otmr: Union[oTMR, OrderedDict], debug: bool = False):
+    def run(self, otmr: Union[oTMR, OrderedDict, str], debug: bool = False):
+        if isinstance(otmr, str):
+            # check if it's a frame id and create an otmr from the frame, else raise
+            # value error
+            pass
         if isinstance(otmr, OrderedDict):
             # convert otmr to oTMR 
-            pass
-        
+            otmr = oTMR.instance_from_dict(otmr)
+            pprint(otmr.root().debug())
 
-        return "oTMR successfully input!"
-
+        print("oTMR successfully input!")
 
 
 if __name__ == '__main__':
     with open("knowledge/sample_otmrs/Could_you_get_the_red_block.json", "r") as file:
         data = json.load(file, object_pairs_hook=OrderedDict)
-    pprint(data)
+
+    OntoGenRunner().run(data)
 
