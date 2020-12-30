@@ -2,13 +2,19 @@
 from ontogen.utils.common import AnchoredObject
 
 # OntoGraph Imports
-from ontograph.Query import AndComparator, ExistsComparator, InSpaceComparator, Query, SelectPipeline
 from ontograph_ontolang.OntoLang import OntoLang
 from ontograph.Identifier import Identifier
 from ontograph.Focus import Focus
 from ontograph.Frame import Frame
 from ontograph.Space import Space
 from ontograph import graph
+from ontograph.Query import (
+    AndComparator,
+    ExistsComparator,
+    InSpaceComparator,
+    Query,
+    SelectPipeline,
+)
 
 # Python Package Imports
 from typing import Generic, TypeVar, Union
@@ -39,10 +45,11 @@ class oTMR(AnchoredObject):
                  tmr_type: Union[str, Frame] = "@ONT.OTMR",
                  root_type: Union[None, str, Frame] = "@ONT.SPEECH-ACT",
                  originator: Union[None, str, Frame] = None,
+                 space: Union[None, str, Space] = None,
                  raw: Union[None, str] = None,
                  priority: Priority = Priority.ASAP,
                  speaker: Union[None, str, Frame] = None,
-                 listener: Union[None, str, Frame] = None,) -> 'oTMR':
+                 listener: Union[None, str, Frame] = None) -> "oTMR":
 
         # Build the oTMR frame
         if isinstance(tmr_type, Frame):
@@ -52,6 +59,7 @@ class oTMR(AnchoredObject):
         otmr = cls(frame)
 
         # Reserve the oTMR space
+        # if space is None:
         space = oTMR.next_available_space(header=name)
         otmr.set_space(space)
 
@@ -90,20 +98,37 @@ class oTMR(AnchoredObject):
         return otmr
 
     @classmethod
-    def instance_from_dict(cls, input_dict: Union[dict, OrderedDict]) -> 'oTMR':
+    def instance_from_dict(cls,
+                           input_dict: Union[dict, OrderedDict] = None,
+                           priority: Priority = Priority.ASAP) -> "oTMR":
+
+        # Make input_dict elements frames and anchor to graph
         out = dict_to_otmr(input_dict)
+
+        # Get oTMR root and check for multiple roots
+        root = [el for el in out if "TMR-ROOT" in el]
+        if len(root) > 1:
+            raise ValueError("oTMR cannot have multiple roots")
+        elif len(root) < 1:
+            raise ValueError("oTMR must have a root")
+
+        # Create oTMR anchor
+        frame = Frame(f"@IO.OTMR.?").add_parent("@ONT.OTMR")
+        otmr = cls(frame)
+
+        root = root[0]
+        otmr.set_root(root)
+
+        space = root.space()
+        otmr.set_space(space)
         
-        for element in out:
-            if "TMR-ROOT" in element:
-                # TODO: add config features to instantiation
-                otmr = oTMR.instance(element)
-                otmr.set_speaker(element['AGENT'].singleton())
-                otmr.set_listener(element['BENEFICIARY'].singleton())
-                return otmr 
+        otmr.set_status(oTMR.Status.ISSUED)
+        otmr.set_priority(priority)
+        otmr.set_timestamp(time.time_ns())
+        otmr.set_speaker(root["AGENT"].singleton())
+        otmr.set_listener(root["BENEFICIARY"].singleton())
 
-        # TODO: make this more robust...
-        raise ValueError("oTMR root not in input")
-
+        return otmr
 
     @classmethod
     def next_available_space(cls, header: str = "OTMR") -> Space:
@@ -199,17 +224,21 @@ class oTMR(AnchoredObject):
             listener = Frame(listener)
         self.root()["BENEFICIARY"] = listener
 
-    # def debug(self):
-    #     for 
 
 def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) -> str:
-    inverses = Query(AndComparator([InSpaceComparator("ONT"), 
-                     ExistsComparator(slot="INVERSE")])).flatten().filter(
-                        str).select(SelectPipeline.Column.FILLER).start()
+    inverses = (
+        Query(
+            AndComparator([InSpaceComparator("ONT"), ExistsComparator(slot="INVERSE")])
+        )
+        .flatten()
+        .filter(str)
+        .select(SelectPipeline.Column.FILLER)
+        .start()
+    )
 
     found_ids = set()
     built_ids = set()
-#
+
     out = ""
 
     space = oTMR.next_available_space()
@@ -237,9 +266,21 @@ def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) ->
                 return _fix_frame_id(value)
 
             # TODO - check for ontology existence
-            if _property.upper() in ["AGENT", "BENEFICIARY", "THEME", "INSTRUMENT", "MODALITY", "SCOPE", "ATTRIBUTED-TO", "DESTINATION", "DOMAIN", "INSTANCE-OF", "RANGE"]:
+            if _property.upper() in [
+                "AGENT",
+                "BENEFICIARY",
+                "THEME",
+                "INSTRUMENT",
+                "MODALITY",
+                "SCOPE",
+                "ATTRIBUTED-TO",
+                "DESTINATION",
+                "DOMAIN",
+                "INSTANCE-OF",
+                "RANGE",
+            ]:
                 return _fix_frame_id(value)
-            return f"\"{value}\""
+            return f'"{value}"'
         return value
 
     def _convert_frame(frame: str, contents: dict) -> str:
@@ -260,7 +301,10 @@ def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) ->
                 else:
                     properties.append("INSTANCE-OF @ONT.%s;" % value)
 
-        return "%s = {\n%s\n};" % (frame_id, "\n".join(map(lambda p: "\t" + p, properties)))
+        return "%s = {\n%s\n};" % (
+            frame_id,
+            "\n".join(map(lambda p: "\t" + p, properties)),
+        )
 
     for key in tmr.keys():
         if key.lower() == key:
@@ -277,19 +321,3 @@ def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) ->
         return OntoLang().run(out)
     else:
         return out
-
-if __name__ == '__main__':
-    with open("../knowledge/sample_otmrs/Could_you_get_the_red_block.json", "r") as file:
-        data = json.load(file, object_pairs_hook=OrderedDict)
-
-    outputtmr = oTMR.instance_from_dict(data)
-    pprint(outputtmr.anchor.debug())
-
-
-
-
-
-
-
-
-    
