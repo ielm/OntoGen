@@ -1,5 +1,7 @@
 # User Ignores
 wiki/
+
+# User archive
 .archive/
 
 # System files
