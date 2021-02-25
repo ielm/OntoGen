@@ -28,6 +28,8 @@ import re
 
 RAW = TypeVar("RAW")
 
+SPEECH_ACTS = ["REQUEST-ACTION", "REQUEST-INFO"]
+
 
 class oTMR(AnchoredObject):
     class Status(Enum):
@@ -41,15 +43,17 @@ class oTMR(AnchoredObject):
         INTERRUPT = "INTERRUPT"
 
     @classmethod
-    def instance(cls,
-                 tmr_type: Union[str, Frame] = "@ONT.OTMR",
-                 root_type: Union[None, str, Frame] = "@ONT.SPEECH-ACT",
-                 originator: Union[None, str, Frame] = None,
-                 space: Union[None, str, Space] = None,
-                 raw: Union[None, str] = None,
-                 priority: Priority = Priority.ASAP,
-                 speaker: Union[None, str, Frame] = None,
-                 listener: Union[None, str, Frame] = None) -> "oTMR":
+    def instance(
+        cls,
+        tmr_type: Union[str, Frame] = "@ONT.OTMR",
+        root_type: Union[None, str, Frame] = "@ONT.SPEECH-ACT",
+        originator: Union[None, str, Frame] = None,
+        space: Union[None, str, Space] = None,
+        raw: Union[None, str] = None,
+        priority: Priority = Priority.ASAP,
+        speaker: Union[None, str, Frame] = None,
+        listener: Union[None, str, Frame] = None,
+    ) -> "oTMR":
 
         # Build the oTMR frame
         if isinstance(tmr_type, Frame):
@@ -98,16 +102,21 @@ class oTMR(AnchoredObject):
         return otmr
 
     @classmethod
-    def instance_from_dict(cls,
-                           input_dict: Union[dict, OrderedDict] = None,
-                           priority: Priority = Priority.ASAP) -> "oTMR":
+    def instance_from_dict(
+        cls,
+        input_dict: Union[dict, OrderedDict] = None,
+        priority: Priority = Priority.ASAP,
+    ) -> "oTMR":
 
         # Make input_dict elements frames and anchor to graph
-        out = dict_to_otmr(input_dict)
+        out = dict_to_frames(input_dict["tmr"])
+
+        # print(input_dict["tmr"])
 
         # Get oTMR root and check for multiple roots
-        root = [el for el in out if "TMR-ROOT" in el]
+        root = [el for el in out if ("TMR-ROOT" in el or el.name() in SPEECH_ACTS)]
         if len(root) > 1:
+            # consolidate roots
             raise ValueError("oTMR cannot have multiple roots")
         elif len(root) < 1:
             raise ValueError("oTMR must have a root")
@@ -121,7 +130,7 @@ class oTMR(AnchoredObject):
 
         space = root.space()
         otmr.set_space(space)
-        
+
         otmr.set_status(oTMR.Status.ISSUED)
         otmr.set_priority(priority)
         otmr.set_timestamp(time.time_ns())
@@ -224,8 +233,14 @@ class oTMR(AnchoredObject):
             listener = Frame(listener)
         self.root()["BENEFICIARY"] = listener
 
+    def debug(self):
+        # print(self.anchor.id:)
+        pprint({self.anchor.id: self.root().debug()})
+        # for element in self.root():
+        # print(element)
 
-def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) -> str:
+
+def dict_to_frames(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) -> str:
     inverses = (
         Query(
             AndComparator([InSpaceComparator("ONT"), ExistsComparator(slot="INVERSE")])
@@ -243,14 +258,27 @@ def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) ->
 
     space = oTMR.next_available_space()
 
+    default_index = 0
+
     def _fix_frame_id(frame: str) -> str:
-        instance = re.findall(r"-([0-9]+)$", frame)[0]
-        frame_id = re.sub(r"-[0-9]+$", ".%s?" % instance, frame)
+        # if frame is a *-concept, ground the reference.
+        #       *-concepts are concepts like the SPEAKER, INTERLOCUTOR, and VEHICLE-IN-QUESTION
 
-        frame_id = f"@{space.name}.{frame_id}"
+        if frame[0] == "*" and frame[-1] == "*":
+            frame_id = frame.strip("*")
+            frame_id = f"@{space.name}.{frame_id}.35?"  # TODO: DO CORRECT INDEXING
 
-        found_ids.add(frame_id)
-        return frame_id
+            found_ids.add(frame_id)
+
+            return frame_id
+        else:
+            instance = re.findall(r"-([0-9]+)$", frame)[0]
+            frame_id = re.sub(r"-[0-9]+$", ".%s?" % instance, frame)
+            frame_id = f"@{space.name}.{frame_id}"
+
+            found_ids.add(frame_id)
+
+            return frame_id
 
     def _convert_value(_property, value):
         if isinstance(value, str):
@@ -284,14 +312,24 @@ def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) ->
         return value
 
     def _convert_frame(frame: str, contents: dict) -> str:
+        if "concept" in contents:
+            contents["INSTANCE-OF"] = contents["concept"]
+
         frame_id = _fix_frame_id(frame)
         built_ids.add(frame_id)
+
         properties = ["IS-A @ONT.%s;" % contents["INSTANCE-OF"]]
+
         for k in contents.keys():
             if k.lower() == k:
                 continue
             if k.lower() in inverses:
                 continue
+
+            if k == "MP":
+                # RUN KNOWN MPs HERE
+                continue
+
             values = contents[k]
             if not isinstance(values, list):
                 values = [values]
@@ -309,6 +347,7 @@ def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) ->
     for key in tmr.keys():
         if key.lower() == key:
             continue  # Skip non-frame elements
+        print(key)
 
         out += _convert_frame(key, tmr[key]) + "\n"
 
@@ -318,6 +357,6 @@ def dict_to_otmr(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) ->
 
     frame_output = []
     if anchor_to_graph:
-        return OntoLang().run(out)
+        return OntoLang().run(out)  # TODO: convert to str or fix return val
     else:
         return out
