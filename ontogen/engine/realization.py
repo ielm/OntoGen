@@ -6,6 +6,7 @@ from simplenlg.features import *
 
 
 def main():
+	# Test SimpleNLG factories
     lexicon = Lexicon.getDefaultLexicon()
     nlgfactory = NLGFactory(lexicon)
     realizer = Realiser(lexicon)
