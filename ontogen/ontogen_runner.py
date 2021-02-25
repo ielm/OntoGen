@@ -2,12 +2,13 @@ from ontogen.engine.otmr import oTMR
 
 from lex.lexicon import Lexicon
 from ont.ontology import Ontology
-from ontograph.Frame import Frame
 from ontograph import graph
+
+from ontogen.knowledge.lexicon.utils import sem_search
+from ontogen.engine.construction import combine_candidates
 
 from typing import Union
 from collections import OrderedDict
-from pprint import PrettyPrinter, pprint
 
 import json
 
@@ -28,14 +29,18 @@ the specified return type, which can be:
     - An OntoGraph Frame ID of the input oTMR anchor, with the "raw" field modified 
       in memory by OntoGen. 
 """
+
+
 class OntoGenRunner:
-    def __init__(self,
-                 log: int = 0,
-                 dc: int = 0,
-                 dmp: int = 0,
-                 return_one_result: int = 0,
-                 is_robot: int = 0,
-                 robot_args: dict = None) -> 'OntoGenRunner':
+    def __init__(
+        self,
+        log: int = 0,
+        dc: int = 0,
+        dmp: int = 0,
+        return_one_result: int = 0,
+        is_robot: int = 0,
+        robot_args: dict = None,
+    ):
         self.log = log  # log process and results
         self.dc = dc  # display constraint matches
         self.dmp = dmp  # display meaning procedure
@@ -43,22 +48,56 @@ class OntoGenRunner:
         self.is_robot = is_robot
         self.robot_args = robot_args if robot_args is not None else {}
 
-    def run(self, otmr: Union[oTMR, OrderedDict, str], debug: bool = False):
+    def run(self, otmr: Union[oTMR, OrderedDict, dict, str], debug: bool = False):
         if isinstance(otmr, str):
             # check if it's a frame id and create an otmr from the frame, else raise
             # value error
             pass
-        if isinstance(otmr, OrderedDict):
-            # convert otmr to oTMR 
-            otmr = oTMR.instance_from_dict(otmr)
-            pprint(otmr.root().debug())
+        # if isinstance(otmr, dict): # Check for instance type later.
 
-        print("oTMR successfully input!")
+        # TODO: COMBINE MULTIPLE INSTANCE ELEMENTS LIKE REQUEST_ACTION}
+        # otmr = self.__process_tmr(otmr)
+        # pprint(otmr)
+
+        # tmrobj = oTMR.instance_from_dict(otmr)
+
+        # Find candidate constructions for each frame in otmr
+        sem_matches = {}
+        num_items = 0
+        for key, element in otmr["tmr"].items():
+            concept = key.rsplit("-", 1)[0]
+            sem_matches[concept] = sem_search(concept)
+            num_items += 1
+
+        # [[<candidates for tmr frame #1>], [<...frame #2>], [<...frame #3>], ...]
+        temp_candidates = []
+        for key1, _element in sem_matches.items():
+            # print(key1)
+            temp_element = []
+            for key2, _candidate in _element.items():
+                # print("\t", key2)
+                # print(_candidate.keys())
+                temp_element.append({key2: _candidate})
+            temp_candidates.append(temp_element)
+
+        res = list(combine_candidates(*temp_candidates))
+
+        """ 
+            Will not worry about converting to oTMR yet, this is for the future. Just 
+            get the damn thing working first. 
+        """
+        # if isinstance(otmr, OrderedDict):
+        #     # convert otmr to oTMR
+        #     otmr = oTMR.instance_from_dict(otmr)
+        #     pprint(otmr.root().debug())
+
+    def __process_tmr(otmr):
+        pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     with open("knowledge/sample_otmrs/Could_you_get_the_red_block.json", "r") as file:
+        print(file)
         data = json.load(file, object_pairs_hook=OrderedDict)
 
     OntoGenRunner().run(data)
-
