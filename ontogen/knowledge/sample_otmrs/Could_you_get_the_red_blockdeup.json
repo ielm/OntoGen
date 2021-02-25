@@ -1,0 +1,23 @@
+{
+    "REQUEST-ACTION-3": {
+        "AGENT": "ROBOT-3",
+        "BENEFICIARY": "HUMAN-3",
+        "INSTANCE-OF": "REQUEST-ACTION",
+        "THEME": "ACQUIRE-3",
+        "TMR-ROOT": true,
+        "is-in-subtree": "EVENT"
+    },
+    "ACQUIRE-3": {
+        "AGENT": "HUMAN-3",
+        "INSTANCE-OF": "ACQUIRE",
+        "THEME": "OBJECT-3",
+        "TIME": ["FIND-ANCHOR-TIME"]
+    },
+    "HUMAN-3": { "INSTANCE-OF": "HUMAN" },
+    "OBJECT-3": {
+        "COLOR": "RED",
+        "INSTANCE-OF": "OBJECT",
+        "SHAPE": "BLOCKLIKE"
+    },
+    "ROBOT-3": { "INSTANCE-OF": "ROBOT" }
+}
