@@ -28,27 +28,27 @@ class OntoGenTestCase(unittest.TestCase):
             data = file.read()
             self.tmrs = ast.literal_eval(data)
 
-        # Uncomment to get TMR index numbers
-        # for i, tmr in enumerate(results):
-        #     print(f"{i}\t{tmr['sentence']}")
-
-    """ 
-    For now, use the following simple sentences in the test set: 
-         0. Make a left.
-         2. Can you please make a left?
-         4. Could you please make a left?
-     
-         9. Make a slight left.
-         12. Can you make a slight left?
-         13. Could you please make a slight left?
-         
-         18. Make a left turn.
-         
-         36. Make a left at the bridge.
-    """
-
     def test_default(self):
         generator = OntoGenRunner()
+
+        # Uncomment to get TMR index numbers
+        # for i, tmr in enumerate(self.tmrs):
+        #     print(f"{i}\t{tmr['sentence']}")
+
+        """ 
+        For now, use the following simple sentences in the test set: 
+             0. Make a left.
+             2. Can you please make a left?
+             4. Could you please make a left?
+         
+             9. Make a slight left.
+             12. Can you make a slight left?
+             13. Could you please make a slight left?
+             
+             18. Make a left turn.
+             
+             36. Make a left at the bridge.
+        """
 
         tmr_index = 3
         temp = self.tmrs[tmr_index]["results"][0]["TMR"]
