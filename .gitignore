@@ -1,5 +1,6 @@
 # User Ignores
 wiki/
+.archive/
 
 # System files
 .DS_Store
