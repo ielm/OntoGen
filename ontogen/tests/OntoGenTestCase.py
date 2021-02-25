@@ -24,7 +24,7 @@ import ast
 
 class OntoGenTestCase(unittest.TestCase):
     def setUp(self):
-        with open("resources/TMR-results-full.txt", "r") as file:
+        with open("resources/sample-TMRs.txt", "r") as file:
             data = file.read()
             self.tmrs = ast.literal_eval(data)
 
