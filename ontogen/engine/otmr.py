@@ -111,26 +111,52 @@ class oTMR(AnchoredObject):
         # Make input_dict elements frames and anchor to graph
         out = dict_to_frames(input_dict["tmr"])
 
+        # print("THIS IS THE OUTPUT")
+        # print(out)
+
         # print(input_dict["tmr"])
 
-        # Get oTMR root and check for multiple roots
-        root = [el for el in out if ("TMR-ROOT" in el or el.name() in SPEECH_ACTS)]
-        if len(root) > 1:
-            # consolidate roots
-            raise ValueError("oTMR cannot have multiple roots")
-        elif len(root) < 1:
-            raise ValueError("oTMR must have a root")
+        # # Get oTMR root and check for multiple roots
+        # root = [el for el in out if ("TMR-ROOT" in el or el.name() in SPEECH_ACTS)]
+        # if len(root) > 1:
+        #     # consolidate roots
+        #     raise ValueError("oTMR cannot have multiple roots")
+        # elif len(root) < 1:
+        #     raise ValueError("oTMR must have a root")
+
+        # if [True for f in out if "TMR-ROOT" in f]:
+        #     print("yuhhhhh")
+
+        temp_root_list = None
+        if any("TMR-ROOT" in f for f in out):  # if tmr root explicitly stated
+            temp_root_list = [f for f in out if "TMR-ROOT" in f]
+        else:
+            temp_root_list = [f for f in out if f.name() in SPEECH_ACTS]
+
+        # if len(temp_root) > 1:
+        # temp_root = cls.consolidate_roots(temp_root)
+
+        # print(temp_root)
+        # print(type(temp_root_list[0]))
+
+        if len(temp_root_list) == 1:
+            root = temp_root_list[0]
+            # print(type(root))
+        else:
+            raise ValueError("oTMR must have a single root")
+
+        # if len(root) > 1:
+        #     # consolidate roots
+        #     raise ValueError("oTMR cannot have multiple roots")
+        # elif len(root) < 1:
+        #     raise ValueError("oTMR must have a root")
 
         # Create oTMR anchor
         frame = Frame(f"@IO.OTMR.?").add_parent("@ONT.OTMR")
         otmr = cls(frame)
-
-        root = root[0]
         otmr.set_root(root)
-
         space = root.space()
         otmr.set_space(space)
-
         otmr.set_status(oTMR.Status.ISSUED)
         otmr.set_priority(priority)
         otmr.set_timestamp(time.time_ns())
@@ -258,8 +284,6 @@ def dict_to_frames(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) 
 
     space = oTMR.next_available_space()
 
-    default_index = 0
-
     def _fix_frame_id(frame: str) -> str:
         # if frame is a *-concept, ground the reference.
         #       *-concepts are concepts like the SPEAKER, INTERLOCUTOR, and VEHICLE-IN-QUESTION
@@ -320,11 +344,30 @@ def dict_to_frames(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) 
 
         properties = ["IS-A @ONT.%s;" % contents["INSTANCE-OF"]]
 
+        props_to_ignore = [
+            "is-in-subtree",
+            "preference",
+            "sem-preference",
+            "sent-word-ind",
+            "token",
+            "coref",
+        ]
+
+        if "concept" in contents.keys():
+            contents["CONCEPT"] = contents.pop("concept")
+
         for k in contents.keys():
-            if k.lower() == k:
+            # print(f"\t{k}")
+
+            if k in props_to_ignore:
                 continue
             if k.lower() in inverses:
                 continue
+
+            # # WARNING: HACK TO KEEP CONCEPT IN TMR
+            # if k == "concept":
+            #     contents[k.upper()] = contents.pop(k)
+            #     k = k.upper()
 
             if k == "MP":
                 # RUN KNOWN MPs HERE
@@ -346,8 +389,9 @@ def dict_to_frames(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) 
 
     for key in tmr.keys():
         if key.lower() == key:
+            # print(key)
             continue  # Skip non-frame elements
-        print(key)
+        # print(key)
 
         out += _convert_frame(key, tmr[key]) + "\n"
 
@@ -356,6 +400,7 @@ def dict_to_frames(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) 
         out += "%s = { IS-A @ONT.%s; };\n" % (found_id, isa)
 
     frame_output = []
+
     if anchor_to_graph:
         return OntoLang().run(out)  # TODO: convert to str or fix return val
     else:
