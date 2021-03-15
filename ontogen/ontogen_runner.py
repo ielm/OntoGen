@@ -4,8 +4,8 @@ from lex.lexicon import Lexicon
 from ont.ontology import Ontology
 from ontograph import graph
 
-from ontogen.knowledge.lexicon.utils import sem_search
-from ontogen.engine.construction import combine_candidates
+from ontogen.knowledge.lexstuff.utils import sem_search
+from ontogen.engine.construction import CombinationBuilder
 
 from typing import Union
 from collections import OrderedDict
@@ -59,28 +59,13 @@ class OntoGenRunner:
         # otmr = self.__process_tmr(otmr)
         # pprint(otmr)
 
-        # tmrobj = oTMR.instance_from_dict(otmr)
+        tmrobj = oTMR.instance_from_dict(otmr)
+        print(tmrobj.debug())
+        # for item in tmrobj:
+        #     print(item.debug())
+        # print(tmrobj.root()["AGENT"].singleton().id)
 
-        # Find candidate constructions for each frame in otmr
-        sem_matches = {}
-        num_items = 0
-        for key, element in otmr["tmr"].items():
-            concept = key.rsplit("-", 1)[0]
-            sem_matches[concept] = sem_search(concept)
-            num_items += 1
-
-        # [[<candidates for tmr frame #1>], [<...frame #2>], [<...frame #3>], ...]
-        temp_candidates = []
-        for key1, _element in sem_matches.items():
-            # print(key1)
-            temp_element = []
-            for key2, _candidate in _element.items():
-                # print("\t", key2)
-                # print(_candidate.keys())
-                temp_element.append({key2: _candidate})
-            temp_candidates.append(temp_element)
-
-        res = list(combine_candidates(*temp_candidates))
+        # self.build_candidate_combinations(otmr)
 
         """ 
             Will not worry about converting to oTMR yet, this is for the future. Just 
@@ -90,6 +75,32 @@ class OntoGenRunner:
         #     # convert otmr to oTMR
         #     otmr = oTMR.instance_from_dict(otmr)
         #     pprint(otmr.root().debug())
+
+        return otmr["sentence"]  # TODO: GET REAL RETURNED VALUE
+
+    # @staticmethod
+    # def build_candidate_combinations(otmr):
+    #     # Find candidate constructions for each frame in otmr
+    #     sem_matches = {}
+    #     num_items = 0
+    #     for key, element in otmr["tmr"].items():
+    #         concept = key.rsplit("-", 1)[0]
+    #         sem_matches[concept] = sem_search(concept)
+    #         num_items += 1
+
+    #     # [[<candidates for tmr frame #1>], [<...frame #2>], [<...frame #3>], ...]
+    #     temp_candidates = []
+    #     for key1, _element in sem_matches.items():
+    #         # print(key1)
+    #         temp_element = []
+    #         for key2, _candidate in _element.items():
+    #             # print("\t", key2)
+    #             # print(_candidate.keys())
+    #             temp_element.append({key2: _candidate})
+    #         temp_candidates.append(temp_element)
+
+    #     res = list(combine_candidates(*temp_candidates))
+    #     return res
 
     def __process_tmr(otmr):
         pass

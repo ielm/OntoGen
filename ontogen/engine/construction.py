@@ -1,8 +1,11 @@
-import json
+from ontogen.config import OntoGenConfig
+from ontogen.engine.otmr import oTMR
+from lex.lexicon import Lexicon
 
 from typing import List, Tuple
 from collections import OrderedDict
-from lex.lexicon import Lexicon
+
+import json
 
 
 # two structures, a combination and a construction
@@ -88,59 +91,85 @@ class Construction:
                     self.varmap["$VAR0"][f"^{element}"] = self.sem_struc[element]
 
 
-def combine_candidates(*candidates, repeat=1):
-    # ((<tmr element candidates>), (<...>), (<...>)) -> ((<combination>), (<...>), ...)
-    pools = [tuple(pool) for pool in candidates] * repeat
-    result = [[]]
-    for pool in pools:
-        result = [x + [y] for x in result for y in pool]
-    for prod in result:
-        compatible, combination = check_basic_compatibility(prod)
-        if compatible:
-            yield tuple(combination)
+class CombinationBuilder:
+    def __init__(self, config: OntoGenConfig):
+        self.config = config
 
+    def run(self, otmr: oTMR):
+        # Find candidate constructions for each frame in otmr
+        sem_matches = {}
+        num_items = 0
+        for key, element in otmr["tmr"].items():
+            concept = key.rsplit("-", 1)[0]
+            sem_matches[concept] = sem_search(concept)
+            num_items += 1
 
-def check_basic_compatibility(input_combination: list) -> Tuple[bool, list]:
-    """
-    returns true and the corrected combination if compatible, else return false and
-    annotated combination detailing why it wasn't compatible.
-    """
+        # [[<candidates for tmr frame #1>], [<...frame #2>], [<...frame #3>], ...]
+        temp_candidates = []
+        for key1, _element in sem_matches.items():
+            temp_element = []
+            for key2, _candidate in _element.items():
+                temp_element.append({key2: _candidate})
+            temp_candidates.append(temp_element)
 
-    # Reduce input list of candidates to single dictionary
-    flat = {_k: _v for _c in input_combination for _k, _v in _c.items()}
-    candidate_ids = [_x for _x in flat.keys()]  # list of candidate
+        res = list(self.combine_candidates(*temp_candidates))
+        return res
 
-    combination = {}
-    combination_list = []  # TODO: fix combination return
-    for c_id, c_raw in flat.items():
-        combination[c_id] = Construction(c_id, c_raw)
-        # print(c_id)
-        # pprint(combination[c_id].varmap)
+    def combine_candidates(self, *candidates, repeat=1):
+        # ((<tmr element candidates>), (<...>), (<...>)) -> ((<combination>), (<...>), ...)
+        pools = [tuple(pool) for pool in candidates] * repeat
+        result = [[]]
+        for pool in pools:
+            result = [x + [y] for x in result for y in pool]
+        for prod in result:
+            compatible, combination = self.check_basic_compatibility(prod)
+            if compatible:
+                yield tuple(combination)
+            # else:
+            # add compatability check to log
 
-    return True, combination_list  # TODO: replace with true checking and return
+    @staticmethod
+    def check_basic_compatibility(input_combination: list) -> Tuple[bool, list]:
+        """
+        returns true and the corrected combination if compatible, else return false and
+        annotated combination detailing why it wasn't compatible.
+        """
 
+        # Reduce input list of candidates to single dictionary
+        flat = {_k: _v for _c in input_combination for _k, _v in _c.items()}
+        candidate_ids = [_x for _x in flat.keys()]  # list of candidate
 
-def prune_combinations(combinations: list) -> list:
+        combination = {}
+        combination_list = []  # TODO: fix combination return
+        for c_id, c_raw in flat.items():
+            combination[c_id] = Construction(c_id, c_raw)
+            # print(c_id)
+            # pprint(combination[c_id].varmap)
 
-    verified = []
+        return True, combination_list  # TODO: replace with true checking and return
 
-    for combo in combinations:
-        print()
-        if check_basic_compatibility(combo):
-            verified.append(combo)
+    @staticmethod
+    def prune_combinations(combinations: list) -> list:
 
-    return verified
+        verified = []
 
+        for combo in combinations:
+            print()
+            if check_basic_compatibility(combo):
+                verified.append(combo)
 
-def test_prune_combinations(combinations: list, limit=1) -> list:
+        return verified
 
-    verified = []
+    @staticmethod
+    def test_prune_combinations(combinations: list, limit=1) -> list:
 
-    for combo in combinations[:limit]:
-        if check_basic_compatibility(combo):
-            verified.append(combo)
+        verified = []
 
-    return verified
+        for combo in combinations[:limit]:
+            if check_basic_compatibility(combo):
+                verified.append(combo)
+
+        return verified
 
 
 def boostrap_speech_act_cxs() -> dict:
