@@ -173,12 +173,12 @@ class Sense(object):
             "semstruc": self.semstruc.to_dict(),
         }
 
-    def to_str(self) -> str:
+    def to_str(self, indent: int = 4) -> str:
         # s = f"\tid: {self.id}\n\tpos: {self.pos}\n\tsynstruc: {self.synstruc.to_str()}\n\tsemstruc: {self.semstruc.to_str()}"
-        s = f"\n\tid: {self.id}\n"
-        s += f"\tpos: {self.pos}\n"
-        s += f"\tsynstruc: {self.synstruc.to_str()}\n"
-        s += f"\tsemstruc: {self.semstruc.to_str()}"
+        s = f"\n{' '*(indent)}id: {self.id}\n"
+        s += f"{' '*(indent)}pos: {self.pos}\n"
+        s += f"{' '*(indent)}synstruc: {self.synstruc.to_str()}\n"
+        s += f"{' '*(indent)}semstruc: {self.semstruc.to_str()}"
         return s
 
     def __repr__(self):
@@ -194,10 +194,10 @@ class SynStruc(object):
     def to_dict(self) -> dict:
         return self.data
 
-    def to_str(self) -> str:
+    def to_str(self, indent: int = 40) -> str:
         s = ""
         for k, v in self.data.items():
-            s += f"\n\t\t{k}: {v}"
+            s += f"\n{' '*(indent)}{k}: {v}"
         return s
 
     def __eq__(self, other):
@@ -309,10 +309,10 @@ class SemStruc(object):
     def to_dict(self) -> dict:
         return self.data
 
-    def to_str(self) -> str:
+    def to_str(self, indent: int = 4) -> str:
         s = ""
         for k, v in self.data.items():
-            s += f"\n\t\t{k}: {v}"
+            s += f"\n{' '*(indent)}{k}: {v}"
         return s
 
     def __repr__(self):
