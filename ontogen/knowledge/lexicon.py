@@ -18,15 +18,17 @@ class Lexicon(object):
     _null_sense = None
 
     @classmethod
-    def null_sense(cls) -> 'Sense':
+    def null_sense(cls) -> "Sense":
         if Lexicon._null_sense is None:
-            Lexicon._null_sense = Sense("NULL", "", SynStruc(OrderedDict()), SemStruc({}), [])
+            Lexicon._null_sense = Sense(
+                "NULL", "", SynStruc(OrderedDict()), SemStruc({}), []
+            )
         return Lexicon._null_sense
 
     def __init__(self):
         self.sense_cache = {}
 
-    def sense(self, id: str) -> 'Sense':
+    def sense(self, id: str) -> "Sense":
         # If the requested id is nulled, return the singleton null sense.
         # TODO: replace this detection with a check for the explicit null sense flag
         if not re.findall("-[A-Z]+[0-9]+$", id):
@@ -44,6 +46,10 @@ class Lexicon(object):
             frames = filter(lambda f: f.isa(lexword), frames)
             frames = list(frames)
 
+            # Find all frames that fit the desired POS
+            pos = [re.findall(r"(\w+?)(\d+)", id.split("-")[-1])[0]][0][0]
+            frames = [f for f in frames if pos in str(f).split(".", 1)[-1]]
+
             # There should be exactly one (if it is defined)
             if len(frames) == 0:
                 raise Exception("Unknown lexical sense %s." % id)
@@ -57,14 +63,20 @@ class Lexicon(object):
 
         return self.sense_cache[id]
 
-    def add_sense(self, sense: 'Sense'):
+    def add_sense(self, sense: "Sense"):
         self.sense_cache[sense.id] = sense
+
+    def to_str(self) -> str:
+        s = ""
+        for k, sense in self.sense_cache.items():
+            s += f"\n{k}"
+            s += sense.to_str()
+        return s
 
 
 class Sense(object):
-
     @classmethod
-    def parse_lisp(cls, lisp: list) -> 'Sense':
+    def parse_lisp(cls, lisp: list) -> "Sense":
         id = lisp[0]
 
         pos = None
@@ -73,11 +85,16 @@ class Sense(object):
         meaning_procedures: list = []
 
         for e in lisp:
-            if type(e) != list: continue
-            if e[0] == "CAT": pos = e[1]
-            elif e[0] == "SYN-STRUC": synstruc = e[1]
-            elif e[0] == "SEM-STRUC": semstruc = e[1:]
-            elif e[0] == "MEANING-PROCEDURES": meaning_procedures = e[1:]
+            if type(e) != list:
+                continue
+            if e[0] == "CAT":
+                pos = e[1]
+            elif e[0] == "SYN-STRUC":
+                synstruc = e[1]
+            elif e[0] == "SEM-STRUC":
+                semstruc = e[1:]
+            elif e[0] == "MEANING-PROCEDURES":
+                meaning_procedures = e[1:]
 
         def parse_synstruc(l: list, d: OrderedDict) -> OrderedDict:
             if l is None:
@@ -99,9 +116,7 @@ class Sense(object):
                     property = p[0]
                     filler = p[1]
                     if type(filler) == list:
-                        filler = {
-                            filler[0]: filler[1]
-                        }
+                        filler = {filler[0]: filler[1]}
                     semstruc[head][property] = filler
 
             return semstruc
@@ -117,20 +132,33 @@ class Sense(object):
         semstruc: dict = parse_semstruc(semstruc)
         meaning_procedures: list = parse_meaning_procedures(meaning_procedures)
 
-        return Sense(id, pos, SynStruc(synstruc), SemStruc(semstruc), meaning_procedures)
+        return Sense(
+            id, pos, SynStruc(synstruc), SemStruc(semstruc), meaning_procedures
+        )
 
     @classmethod
-    def from_frame(cls, frame: Frame) -> 'Sense':
+    def from_frame(cls, frame: Frame) -> "Sense":
         id = frame["SENSE"].singleton()
         pos = frame["CAT"].singleton()
         synstruc = SynStruc(frame["SYN-STRUC"].singleton())
         semstruc = SemStruc(frame["SEM-STRUC"].singleton())
-        meaning_procedures = list(map(lambda mp: MeaningProcedure(mp), frame["MEANING-PROCEDURES"].singleton()))
+        meaning_procedures = list(
+            map(
+                lambda mp: MeaningProcedure(mp), frame["MEANING-PROCEDURES"].singleton()
+            )
+        )
 
         sense = Sense(id, pos, synstruc, semstruc, meaning_procedures)
         return sense
 
-    def __init__(self, id: str, pos: str, synstruc: 'SynStruc', semstruc: 'SemStruc', meaning_procedures: List['MeaningProcedure']):
+    def __init__(
+        self,
+        id: str,
+        pos: str,
+        synstruc: "SynStruc",
+        semstruc: "SemStruc",
+        meaning_procedures: List["MeaningProcedure"],
+    ):
         self.id = id
         self.pos = pos
         self.synstruc = synstruc
@@ -142,19 +170,35 @@ class Sense(object):
             "id": self.id,
             "pos": self.pos,
             "synstruc": self.synstruc.to_dict(),
-            "semstruc": self.semstruc.to_dict()
+            "semstruc": self.semstruc.to_dict(),
         }
+
+    def to_str(self) -> str:
+        # s = f"\tid: {self.id}\n\tpos: {self.pos}\n\tsynstruc: {self.synstruc.to_str()}\n\tsemstruc: {self.semstruc.to_str()}"
+        s = f"\n\tid: {self.id}\n"
+        s += f"\tpos: {self.pos}\n"
+        s += f"\tsynstruc: {self.synstruc.to_str()}\n"
+        s += f"\tsemstruc: {self.semstruc.to_str()}"
+        return s
+
+    def __repr__(self):
+        return f"{self.id}"
 
 
 # SynStruc is a simple object wrapper for now; an ordered dict matching the database representation is sufficient
 # as the semantic analyzer doesn't current use the synstruc.
 class SynStruc(object):
-
     def __init__(self, data: OrderedDict):
         self.data = data
 
     def to_dict(self) -> dict:
         return self.data
+
+    def to_str(self) -> str:
+        s = ""
+        for k, v in self.data.items():
+            s += f"\n\t\t{k}: {v}"
+        return s
 
     def __eq__(self, other):
         if isinstance(other, SynStruc):
@@ -166,17 +210,26 @@ class SynStruc(object):
 class SemStruc(object):
 
     MPS = {
-        "FIND-NOUN-ATTRIBUTE", "APPLY-COUNT-NP", "ABSOLUTE-TIME",
-        "SEEK-SPONSOR-IN-TEXT", "PASS-THROUGH-MEANING", "INCREASE-IN-VALUE",
-        "FIND-ANCHOR-SPEAKER", "APPLY-MEANING", "FIND-ANCHOR-PLACE",
-        "SEEK-CONTEXTUAL-SPONSOR", "FIND-ANCHOR-TIME", "REQUEST-INFO-TRACE",
-        "EVALUATED-ACCORDINT-TO", "COMBINE-TIME", "CALCULATE-QUOTIENT",
-        "COREF", "COMBINE-AMOUNT"
+        "FIND-NOUN-ATTRIBUTE",
+        "APPLY-COUNT-NP",
+        "ABSOLUTE-TIME",
+        "SEEK-SPONSOR-IN-TEXT",
+        "PASS-THROUGH-MEANING",
+        "INCREASE-IN-VALUE",
+        "FIND-ANCHOR-SPEAKER",
+        "APPLY-MEANING",
+        "FIND-ANCHOR-PLACE",
+        "SEEK-CONTEXTUAL-SPONSOR",
+        "FIND-ANCHOR-TIME",
+        "REQUEST-INFO-TRACE",
+        "EVALUATED-ACCORDINT-TO",
+        "COMBINE-TIME",
+        "CALCULATE-QUOTIENT",
+        "COREF",
+        "COMBINE-AMOUNT",
     }
 
-    IEQS = {
-        "=", ">", "<", "><", ">=<", ">=", "<=", "OR", "NOT"
-    }
+    IEQS = {"=", ">", "<", "><", ">=<", ">=", "<=", "OR", "NOT"}
 
     @dataclass
     class Head:
@@ -192,7 +245,7 @@ class SemStruc(object):
     @dataclass
     class RefSem:
         index: int
-        semstruc: 'SemStruc' = None
+        semstruc: "SemStruc" = None
 
     @dataclass
     class Variable:
@@ -209,7 +262,11 @@ class SemStruc(object):
 
         self.data = data
 
-    def elements(self) -> List[Union['SemStruc.Head', 'SemStruc.Sub', 'SemStruc.RefSem', 'SemStruc.Variable']]:
+    def elements(
+        self,
+    ) -> List[
+        Union["SemStruc.Head", "SemStruc.Sub", "SemStruc.RefSem", "SemStruc.Variable"]
+    ]:
         results = []
 
         sub_index = 0
@@ -233,24 +290,30 @@ class SemStruc(object):
 
         return results
 
-    def head(self) -> Union['SemStruc.Head', None]:
+    def head(self) -> Union["SemStruc.Head", None]:
         for e in self.elements():
             if isinstance(e, SemStruc.Head):
                 return e
 
         return None
 
-    def subs(self) -> List['SemStruc.Sub']:
+    def subs(self) -> List["SemStruc.Sub"]:
         return list(filter(lambda e: isinstance(e, SemStruc.Sub), self.elements()))
 
-    def refsems(self) -> List['SemStruc.RefSem']:
+    def refsems(self) -> List["SemStruc.RefSem"]:
         return list(filter(lambda e: isinstance(e, SemStruc.RefSem), self.elements()))
 
-    def variables(self) -> List['SemStruc.Variable']:
+    def variables(self) -> List["SemStruc.Variable"]:
         return list(filter(lambda e: isinstance(e, SemStruc.Variable), self.elements()))
 
     def to_dict(self) -> dict:
         return self.data
+
+    def to_str(self) -> str:
+        s = ""
+        for k, v in self.data.items():
+            s += f"\n\t\t{k}: {v}"
+        return s
 
     def __repr__(self):
         return repr(self.data)
@@ -262,7 +325,6 @@ class SemStruc(object):
 
 
 class MeaningProcedure(object):
-
     def __init__(self, data: List[Union[str, List[str]]]):
         if len(data) == 0:
             data = ["UNKNOWN-MP"]
