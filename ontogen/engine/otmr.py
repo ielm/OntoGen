@@ -1,407 +1,283 @@
-# Local Package Imports
-from ontogen.utils.common import AnchoredObject
+from ontogen.knowledge.lexicon import Lexicon, Sense
+from ontogen.knowledge.ontology import Ontology
+from ontogen.engine.candidate import RealizationCandidate
+from ontogen.config import OntoGenConfig
 
-# OntoGraph Imports
-from ontograph_ontolang.OntoLang import OntoLang
-from ontograph.Identifier import Identifier
-from ontograph.Focus import Focus
-from ontograph.Frame import Frame
-from ontograph.Space import Space
-from ontograph import graph
-from ontograph.Query import (
-    AndComparator,
-    ExistsComparator,
-    InSpaceComparator,
-    Query,
-    SelectPipeline,
-)
+from typing import Any, List, Union
 
-# Python Package Imports
-from typing import Generic, TypeVar, Union
-from collections import OrderedDict
-from pprint import pprint
-from enum import Enum
-
-import time
-import json
+import ast
 import re
 
-RAW = TypeVar("RAW")
 
-SPEECH_ACTS = ["REQUEST-ACTION", "REQUEST-INFO"]
+class oTMR:
+    def __init__(
+        self, config: OntoGenConfig, ontology: Ontology = None, lexicon: Lexicon = None
+    ):
+        self.config = config
+        self.ontology = ontology if ontology is not None else self.config.ontology()
+        self.lexicon = lexicon if lexicon is not None else self.config.lexicon()
+        self.frames = {}
+        self.root = None
 
+    def next_frame_for_concept(self, concept: str) -> "TMRFrame":
+        instance = 0
 
-class oTMR(AnchoredObject):
-    class Status(Enum):
-        RAW = "RAW"  # The oTMR represents raw output that hasn't been processed
-        ISSUED = "ISSUED"  # The oTMR represents output that has not yet been rendered
-        RENDERED = "RENDERED"  # The oTMR represents output that has been rendered
+        for f in self.frames.values():
+            if f.concept == concept:
+                instance = max(instance, f.instance)
 
-    class Priority(Enum):
-        LOW = "LOW"
-        ASAP = "ASAP"
-        INTERRUPT = "INTERRUPT"
+        instance += 1
+
+        frame = TMRFrame(concept, instance)
+        self.frames[frame.frame_id()] = frame
+
+        return frame
+
+    def remove_frame(self, frame: "TMRFrame"):
+        frame_id = frame.frame_id()
+
+        self.frames.pop(frame_id)
+        for frame in self.frames.values():
+            for property, fillers in list(frame.properties.items()):
+                if frame_id in fillers:
+                    frame.properties[property].remove(frame_id)
+
+    def items(self):
+        for k, v in self.frames.items():
+            yield k, v
+
+    def constructions(self):
+        return [f.list_constructions() for _, f in self.frames.items()]
+
+    def add_candidate(self, candidate: RealizationCandidate):
+        self.candidates.append(candidates)
+
+    def get_candidates(self):
+        for c in self.candidates:
+            yield c
+
+    def root(self):
+        return {self.root: self.frames[self.root]}
+
+    def set_root(self, frame_id: str):
+        self.root = frame_id
+
+    def set_ontology(self, ontology: Ontology):
+        self.ontology = ontology
+
+    def set_lexicon(self, lexicon: Lexicon):
+        self.lexicon = lexicon
+
+    def to_dict(self) -> dict:
+        return {"frames": list(map(lambda f: f.to_dict(), self.frames.values()))}
 
     @classmethod
-    def instance(
-        cls,
-        tmr_type: Union[str, Frame] = "@ONT.OTMR",
-        root_type: Union[None, str, Frame] = "@ONT.SPEECH-ACT",
-        originator: Union[None, str, Frame] = None,
-        space: Union[None, str, Space] = None,
-        raw: Union[None, str] = None,
-        priority: Priority = Priority.ASAP,
-        speaker: Union[None, str, Frame] = None,
-        listener: Union[None, str, Frame] = None,
-    ) -> "oTMR":
+    def instance(cls, config: OntoGenConfig, tmr_dict: dict) -> "oTMR":
+        otmr = oTMR(config=config)
+        out = []
+        found_ids = set()
+        built_ids = set()
 
-        # Build the oTMR frame
-        if isinstance(tmr_type, Frame):
-            tmr_type = tmr_type.id
-        name = Identifier.parse(tmr_type)[1]
-        frame = Frame("@IO.%s.?" % name).add_parent(tmr_type)
-        otmr = cls(frame)
+        def _convert_frame(frame_id: str, contents: dict):
+            if "concept" in contents:
+                contents["INSTANCE-OF"] = contents["concept"]
 
-        # Reserve the oTMR space
-        # if space is None:
-        space = oTMR.next_available_space(header=name)
-        otmr.set_space(space)
+            frame_id = _fix_frame_id(frame_id).split(".")
+            built_ids.add(f"{frame_id[0]}.{frame_id[1]}")
 
-        # If a root type was provided, make an instance of it and assign it to the root; otherwise
-        # make a default placeholder root
-        if root_type is not None:
-            if isinstance(root_type, Frame):
-                root_type = root_type.id
-            root_name = Identifier.parse(root_type)[1]
-            root = space.frame("@.%s.?" % root_name).add_parent(root_type)
-            otmr.set_root(root)
-        else:
-            root = space.frame("@.ALL.?").add_parent("@ONT.ALL")
-            root["PLACEHOLDER"] = True
-            otmr.set_root(root)
+            frame = otmr.next_frame_for_concept(frame_id[0])
+            # print(frame)
 
-        # Assign any originator provided
-        if originator is not None:
-            otmr.set_originator(originator)
+            properties_to_ignore = [
+                "is-in-subtree",
+                "preference",
+                "sem-preference",
+                "sent-word-ind",
+                "token",
+                "coref",
+            ]
 
-        # Assign any raw data provided
-        if raw is not None:
-            otmr.set_raw(raw)
-            otmr.set_status(oTMR.Status.RAW)
-        else:
-            otmr.set_status(oTMR.Status.ISSUED)
+            if "concept" in contents.keys():
+                contents["CONCEPT"] = contents.pop("concept")
 
-        otmr.set_priority(priority)
-        otmr.set_timestamp(time.time_ns())
+            for _slot_id, _slot in contents.items():
+                if _slot_id in properties_to_ignore:
+                    continue
 
-        if speaker is not None:
-            otmr.set_speaker(speaker)
-        if listener is not None:
-            otmr.set_listener(listener)
+                # print(f"\t{_slot_id}")
+                if _slot_id == "MP":
+                    # TODO - RUN KNOWN MPs HERE , for now just add them to otmr
+                    for mp in _slot:
+                        # print(mp)
+                        # print(f"\t\t{mp}")
+                        frame.add_filler(_slot_id, mp)
+                    continue
+
+                if not isinstance(_slot, list):
+                    _slot = [_slot]
+
+                for _filler in _slot:
+                    # print(f"\t\t{_filler}")
+                    if _slot_id != "INSTANCE-OF":
+                        filler = _convert_value(_slot_id, _filler)
+                        frame.add_filler(_slot_id, filler)
+                    else:
+                        frame.add_filler(_slot_id, f"@ONT.{_filler}")
+
+            return frame
+
+        def _fix_frame_id(frame: str):
+            # if frame is a *-concept, ground the reference.
+            #       *-concepts are concepts like the SPEAKER, INTERLOCUTOR, and VEHICLE-IN-QUESTION
+
+            if frame[0] == "*" and frame[-1] == "*":
+                frame_id = f"{frame}.?"  # TODO: DO CORRECT INDEXING
+                found_ids.add(frame_id)
+                return frame_id
+            else:
+                instance = re.findall(r"-([0-9]+)$", frame)[0]
+                frame_id = re.sub(r"-[0-9]+$", ".%s" % instance, frame)
+                frame_id = f"{frame_id}"
+                found_ids.add(frame_id)
+                return frame_id
+
+        def _convert_value(_property, value):
+            if isinstance(value, str):
+                # TODO - check for ontology existence
+                if _property.upper() in [
+                    "AGENT",
+                    "BENEFICIARY",
+                    "THEME",
+                    "INSTRUMENT",
+                    "MODALITY",
+                    "SCOPE",
+                    "ATTRIBUTED-TO",
+                    "DESTINATION",
+                    "DOMAIN",
+                    "INSTANCE-OF",
+                    "RANGE",
+                ]:
+                    return _fix_frame_id(value)
+                return f"{value}"
+            return value
+
+        for key in tmr_dict.keys():
+            if key.lower() == key:
+                continue
+            out.append(_convert_frame(key, tmr_dict[key]))
 
         return otmr
 
-    @classmethod
-    def instance_from_dict(
-        cls,
-        input_dict: Union[dict, OrderedDict] = None,
-        priority: Priority = Priority.ASAP,
-    ) -> "oTMR":
+    def __iter__(self):
+        return iter(self.frames)
 
-        # Make input_dict elements frames and anchor to graph
-        out = dict_to_frames(input_dict["tmr"])
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            return self.frames[item]
+        if isinstance(item, TMRFrame):
+            return self.frames[item.frame_id()]
 
-        # print("THIS IS THE OUTPUT")
-        # print(out)
+    def __contains__(self, item):
+        if isinstance(item, str):
+            return item in self.frames
+        if isinstance(item, TMRFrame):
+            return item.frame_id() in self.frames
+        return False
 
-        # print(input_dict["tmr"])
-
-        # # Get oTMR root and check for multiple roots
-        # root = [el for el in out if ("TMR-ROOT" in el or el.name() in SPEECH_ACTS)]
-        # if len(root) > 1:
-        #     # consolidate roots
-        #     raise ValueError("oTMR cannot have multiple roots")
-        # elif len(root) < 1:
-        #     raise ValueError("oTMR must have a root")
-
-        # if [True for f in out if "TMR-ROOT" in f]:
-        #     print("yuhhhhh")
-
-        temp_root_list = None
-        if any("TMR-ROOT" in f for f in out):  # if tmr root explicitly stated
-            temp_root_list = [f for f in out if "TMR-ROOT" in f]
-        else:
-            temp_root_list = [f for f in out if f.name() in SPEECH_ACTS]
-
-        # if len(temp_root) > 1:
-        # temp_root = cls.consolidate_roots(temp_root)
-
-        # print(temp_root)
-        # print(type(temp_root_list[0]))
-
-        if len(temp_root_list) == 1:
-            root = temp_root_list[0]
-            # print(type(root))
-        else:
-            raise ValueError("oTMR must have a single root")
-
-        # if len(root) > 1:
-        #     # consolidate roots
-        #     raise ValueError("oTMR cannot have multiple roots")
-        # elif len(root) < 1:
-        #     raise ValueError("oTMR must have a root")
-
-        # Create oTMR anchor
-        frame = Frame(f"@IO.OTMR.?").add_parent("@ONT.OTMR")
-        otmr = cls(frame)
-        otmr.set_root(root)
-        space = root.space()
-        otmr.set_space(space)
-        otmr.set_status(oTMR.Status.ISSUED)
-        otmr.set_priority(priority)
-        otmr.set_timestamp(time.time_ns())
-        otmr.set_speaker(root["AGENT"].singleton())
-        otmr.set_listener(root["BENEFICIARY"].singleton())
-
-        return otmr
-
-    @classmethod
-    def next_available_space(cls, header: str = "OTMR") -> Space:
-        spaces = list(graph)
-        spaces = filter(lambda space: space.name.startswith(header + "#"), spaces)
-        spaces = map(lambda space: int(space.name.replace(header + "#", "")), spaces)
-        spaces = list(spaces)
-
-        next = 1 if len(spaces) == 0 else max(spaces) + 1
-        return Space(header + "#" + str(next))
-
-    def space(self) -> Space:
-        return Space(self.anchor["SPACE"].singleton().replace("@", "", 1))
-
-    def set_space(self, space: Space):
-        space = "@" + space.name
-        self.anchor["SPACE"] = space
-
-    def root(self) -> Frame:
-        return self.anchor["ROOT", Focus(inh=Focus.Inh.LOC)].singleton()
-
-    def set_root(self, root: Frame):
-        try:
-            cur_root = self.root()
-            if True in cur_root["PLACEHOLDER"]:
-                cur_root.delete()
-        except:
-            pass
-
-        self.anchor["ROOT"] = root
-
-    def originator(self) -> Union[None, Frame]:
-        try:
-            return self.anchor["ORIGINATOR", Focus(inh=Focus.Inh.LOC)].singleton()
-        except:
-            return None
-
-    def set_originator(self, originator: Frame):
-        self.anchor["ORIGINATOR"] = originator
-
-    def raw(self) -> Union[None, RAW]:
-        try:
-            return self.anchor["RAW"].singleton()
-        except:
-            return None
-
-    def set_raw(self, raw: RAW):
-        self.anchor["RAW"] = raw
-
-    def status(self) -> "oTMR.Status":
-        try:
-            return self.anchor["STATUS"].singleton()
-        except:
-            return oTMR.Status.RAW
-
-    def set_status(self, status: "oTMR.Status"):
-        self.anchor["STATUS"] = status
-
-    def priority(self) -> "oTMR.Priority":
-        try:
-            return self.anchor["PRIORITY"].singleton()
-        except:
-            return oTMR.Priority.ASAP
-
-    def set_priority(self, priority: "oTMR.Priority"):
-        self.anchor["PRIORITY"] = priority
-
-    def timestamp(self) -> int:
-        return self.anchor["TIMESTAMP"].singleton()
-
-    def set_timestamp(self, timestamp: int):
-        self.anchor["TIMESTAMP"] = timestamp
-
-    def speaker(self) -> Union[None, Frame]:
-        try:
-            return self.root()["AGENT"].singleton()
-        except:
-            return None
-
-    def set_speaker(self, speaker: Union[str, Frame]):
-        if isinstance(speaker, str):
-            speaker = Frame(speaker)
-        self.root()["AGENT"] = speaker
-
-    def listener(self) -> Union[None, Frame]:
-        try:
-            return self.root()["BENEFICIARY"].singleton()
-        except:
-            return None
-
-    def set_listener(self, listener: Union[str, Frame]):
-        if isinstance(listener, str):
-            listener = Frame(listener)
-        self.root()["BENEFICIARY"] = listener
-
-    def debug(self):
-        # print(self.anchor.id:)
-        pprint({self.anchor.id: self.root().debug()})
-        # for element in self.root():
-        # print(element)
+    def __eq__(self, other):
+        if isinstance(other, oTMR):
+            return self.frames == other.frames
+        return super().__eq__(other)
 
 
-def dict_to_frames(tmr: Union[OrderedDict, dict], anchor_to_graph: bool = True) -> str:
-    inverses = (
-        Query(
-            AndComparator([InSpaceComparator("ONT"), ExistsComparator(slot="INVERSE")])
-        )
-        .flatten()
-        .filter(str)
-        .select(SelectPipeline.Column.FILLER)
-        .start()
-    )
+class TMRFrame:
+    def __init__(
+        self,
+        concept: str,
+        instance: int,
+    ):
+        self.concept = concept
+        self.instance = instance
+        self.properties = {}
+        self.resolutions = set()  # List of ids that this frame resolves to
+        self.senses = []
 
-    found_ids = set()
-    built_ids = set()
+    def add_filler(self, property: str, filler: Any) -> "TMRFrame":
+        if property not in self.properties:
+            self.properties[property] = []
+        self.properties[property].append(filler)
 
-    out = ""
+        return self
 
-    space = oTMR.next_available_space()
+    def remove_filler(self, property: str, filler: Any) -> "TMRFrame":
+        if property not in self.properties:
+            return self
+        self.properties[property].remove(filler)
+        if len(self.properties[property]) == 0:
+            del self.properties[property]
 
-    def _fix_frame_id(frame: str) -> str:
-        # if frame is a *-concept, ground the reference.
-        #       *-concepts are concepts like the SPEAKER, INTERLOCUTOR, and VEHICLE-IN-QUESTION
+        return self
 
-        if frame[0] == "*" and frame[-1] == "*":
-            frame_id = frame.strip("*")
-            frame_id = f"@{space.name}.{frame_id}.35?"  # TODO: DO CORRECT INDEXING
+    def fillers(self, property: str) -> List[Any]:
+        if property not in self.properties:
+            return []
+        return self.properties[property]
 
-            found_ids.add(frame_id)
+    def frame_id(self) -> str:
+        return f"@TMR.{self.concept}.{self.instance}"
 
-            return frame_id
-        else:
-            instance = re.findall(r"-([0-9]+)$", frame)[0]
-            frame_id = re.sub(r"-[0-9]+$", ".%s?" % instance, frame)
-            frame_id = f"@{space.name}.{frame_id}"
+    def add_sense(self, sense: Union[Sense, str]):
+        if isinstance(sense, str):
+            self.senses.append(self.lexicon.sense(sense))
+        elif isinstance(sense, Sense):
+            self.senses.append(sense)
 
-            found_ids.add(frame_id)
+    def senses(self):
+        return [c for c in self.senses]
 
-            return frame_id
+    def to_dict(self) -> dict:
+        return {
+            "id": self.frame_id(),
+            "concept": self.concept,
+            "instance": self.instance,
+            "properties": self.properties,
+            "resolutions": list(self.resolutions),
+        }
 
-    def _convert_value(_property, value):
-        if isinstance(value, str):
-            # if "HUMAN" in value:
-            #     value = f"@{space.name}.HUMAN.1?"
-            #     found_ids.add(value)
-            #     return value
-            # if "ROBOT" in value:
-            #     value = f"@{space.name}.ROBOT.1?"
-            #     found_ids.add(value)
-            #     return value
-            if Frame(f"@ONT.{_property.upper()}") ^ Frame("@ONT.RELATION"):
-                return _fix_frame_id(value)
+    def __repr__(self):
+        return self.frame_id()
 
-            # TODO - check for ontology existence
-            if _property.upper() in [
-                "AGENT",
-                "BENEFICIARY",
-                "THEME",
-                "INSTRUMENT",
-                "MODALITY",
-                "SCOPE",
-                "ATTRIBUTED-TO",
-                "DESTINATION",
-                "DOMAIN",
-                "INSTANCE-OF",
-                "RANGE",
-            ]:
-                return _fix_frame_id(value)
-            return f'"{value}"'
-        return value
+    def __eq__(self, other):
+        if isinstance(other, TMRFrame):
+            return self.concept == other.concept and self.instance == other.instance
+        return super().__eq__(other)
 
-    def _convert_frame(frame: str, contents: dict) -> str:
-        if "concept" in contents:
-            contents["INSTANCE-OF"] = contents["concept"]
 
-        frame_id = _fix_frame_id(frame)
-        built_ids.add(frame_id)
+if __name__ == "__main__":
 
-        properties = ["IS-A @ONT.%s;" % contents["INSTANCE-OF"]]
+    with open("../tests/resources/sample-TMRs.txt", "r") as file:
+        data = file.read()
+        tmrs = ast.literal_eval(data)
 
-        props_to_ignore = [
-            "is-in-subtree",
-            "preference",
-            "sem-preference",
-            "sent-word-ind",
-            "token",
-            "coref",
-        ]
+    tmr_index = 3
+    temp = tmrs[tmr_index]["results"][0]["TMR"]
 
-        if "concept" in contents.keys():
-            contents["CONCEPT"] = contents.pop("concept")
+    tmr = {"sentence": tmrs[tmr_index]["sentence"], "tmr": {}}
 
-        for k in contents.keys():
-            # print(f"\t{k}")
-
-            if k in props_to_ignore:
-                continue
-            if k.lower() in inverses:
-                continue
-
-            # # WARNING: HACK TO KEEP CONCEPT IN TMR
-            # if k == "concept":
-            #     contents[k.upper()] = contents.pop(k)
-            #     k = k.upper()
-
-            if k == "MP":
-                # RUN KNOWN MPs HERE
-                continue
-
-            values = contents[k]
-            if not isinstance(values, list):
-                values = [values]
-            for value in values:
-                if k != "INSTANCE-OF":
-                    properties.append("%s %s;" % (k, _convert_value(k, value)))
-                else:
-                    properties.append("INSTANCE-OF @ONT.%s;" % value)
-
-        return "%s = {\n%s\n};" % (
-            frame_id,
-            "\n".join(map(lambda p: "\t" + p, properties)),
-        )
-
-    for key in tmr.keys():
+    for key in temp.keys():
         if key.lower() == key:
-            # print(key)
             continue  # Skip non-frame elements
-        # print(key)
+        # out += _convert_frame(key, temp[key]) + "\n"
+        tmr["tmr"][key] = temp[key]
 
-        out += _convert_frame(key, tmr[key]) + "\n"
+    # # == DEV PRINTS == #
+    # print(f"TMR No: {tmrs[tmr_index]['sent-num']}")
+    print(f"TMR FOR: {tmr['sentence']}\n")
+    # pprint(tmr["tmr"])
+    # print(f"\n{'-'*80}\n")
 
-    for found_id in found_ids.difference(built_ids):
-        isa = re.findall(r"\.(.*)\.", found_id)[0]
-        out += "%s = { IS-A @ONT.%s; };\n" % (found_id, isa)
-
-    frame_output = []
-
-    if anchor_to_graph:
-        return OntoLang().run(out)  # TODO: convert to str or fix return val
-    else:
-        return out
+    # otmr = oTMRBuilder(config=OntoGenConfig()).run(tmr["tmr"])
+    otmr = oTMR.instance(tmr["tmr"])
+    # pprint(otmr.to_dict())
+    # for k in otmr:
+    # print(type(otmr[k]))
