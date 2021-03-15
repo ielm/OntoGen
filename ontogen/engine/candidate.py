@@ -28,7 +28,7 @@ class RealizationCandidate:
         return s
 
     def __repr__(self):
-        return self.to_str()
+        return f"R#{self.id[:4]} -> {self.constructions}"
 
 
 class ConstructionCandidate:
