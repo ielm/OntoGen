@@ -1,5 +1,9 @@
-# OntoGen V0.2.0
+# OntoGen
+OntoGen is an OntoAgent rendering service and reasoning module for generating natural language utterances.
 
-OntoGen is an OntoAgent rendering service and reasoning module for generating natural language utterances. This version rewrites OntoGen v0.0.3 and provides an OntoAgentReasoningModule for OntoAgent v4.2.X integration.
+## Requirements
 
-This is still very much a work in progress. A lot of code is being rewritten from scratch to incorporate our new construction-driven model and improve on some faults from the last version. 
+- Python 3.7+
+- Run `pip3 install -r requirements.txt` to install all python library requirements
+- LEIA ontology and lexicon docker images (or code) installed and running, OR
+- OntoMem knowledge file
