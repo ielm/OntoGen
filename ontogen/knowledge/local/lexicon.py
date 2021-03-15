@@ -1,4 +1,4 @@
-﻿{
+﻿Lexicon = {
     "A": {
         "A-ART1": {
             "CAT": "ART",
