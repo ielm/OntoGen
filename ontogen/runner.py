@@ -1,4 +1,4 @@
-from ontogen.engine.semantics.compiler import SemanticCompiler
+from ontogen.engine.compiler import CandidateCompiler
 from ontogen.engine.preprocessor import Preprocessor
 from ontogen.engine.report import Report
 from ontogen.engine.otmr import oTMR
@@ -39,13 +39,13 @@ class OntoGenRunner:
 
         # Preprocess - resolve any MPs and reference frames
         pp = Preprocessor(self.config).run(otmr)  # r: preprocessed otmr
-        _ = SemanticCompiler(self.config, self.ontology, self.lexicon).run(pp)
+        candidates = CandidateCompiler(self.config, self.ontology, self.lexicon).run(pp)
 
         # Generate Sentences for Viable Candidates
 
         # Select the Best Candidate Utterance
 
-        return Report
+        return report
 
 
 if __name__ == "__main__":
