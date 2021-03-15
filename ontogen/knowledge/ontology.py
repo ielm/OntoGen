@@ -8,7 +8,6 @@ from typing import Dict, Set, Union
 # It provides direct access to OntoMem frames, and some convenience methods.
 # The analysis task doesn't currently write any data to the ontology, so this simple interface is fine.
 class Ontology(object):
-
     def concept(self, name: str) -> Frame:
         name = name.upper()
         if name not in MemoryManager.memory.frames:
@@ -47,7 +46,9 @@ class Ontology(object):
         return result
 
     def relations(self) -> Set[str]:
-        descendants = set(map(lambda f: f.concept, self.concept("RELATION").descendants()))
+        descendants = set(
+            map(lambda f: f.concept, self.concept("RELATION").descendants())
+        )
         descendants.add("RELATION")
         return descendants
 
