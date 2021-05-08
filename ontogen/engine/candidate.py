@@ -5,6 +5,8 @@ import uuid
 
 
 class RealizationCandidate:
+    # TODO: realization candidates should suggest the dependency constraints for the cx_candidates
+
     def __init__(self, senses: Tuple["ConstructionCandidate"]):
         self.id = str(uuid.uuid4())
         self.constructions = senses
@@ -15,7 +17,7 @@ class RealizationCandidate:
     def to_dict(self):
         return {
             "id": self.id,
-            "constructions": self.constructions.to_dict,
+            "constructions": self.constructions,
             "constraints": self.constraints,
             "scores": self.scores,
             "score": self.score,
@@ -26,6 +28,10 @@ class RealizationCandidate:
         for cx in self.constructions:
             s += f"\n{cx.to_str()}"
         return s
+
+    def __iter__(self):
+        for construction in self.constructions: 
+            yield construction
 
     def __repr__(self):
         return f"R#{self.id[:4]} -> {self.constructions}"
