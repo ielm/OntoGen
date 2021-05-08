@@ -49,13 +49,6 @@ class oTMR:
     def constructions(self):
         return [f.list_constructions() for _, f in self.frames.items()]
 
-    def add_candidate(self, candidate: RealizationCandidate):
-        self.candidates.append(candidates)
-
-    def get_candidates(self):
-        for c in self.candidates:
-            yield c
-
     def root(self):
         return {self.root: self.frames[self.root]}
 
@@ -81,12 +74,10 @@ class oTMR:
         def _convert_frame(frame_id: str, contents: dict):
             if "concept" in contents:
                 contents["INSTANCE-OF"] = contents["concept"]
-
             frame_id = _fix_frame_id(frame_id).split(".")
             built_ids.add(f"{frame_id[0]}.{frame_id[1]}")
 
             frame = otmr.next_frame_for_concept(frame_id[0])
-            # print(frame)
 
             properties_to_ignore = [
                 "is-in-subtree",
@@ -104,12 +95,9 @@ class oTMR:
                 if _slot_id in properties_to_ignore:
                     continue
 
-                # print(f"\t{_slot_id}")
                 if _slot_id == "MP":
                     # TODO - RUN KNOWN MPs HERE , for now just add them to otmr
                     for mp in _slot:
-                        # print(mp)
-                        # print(f"\t\t{mp}")
                         frame.add_filler(_slot_id, mp)
                     continue
 
@@ -117,7 +105,6 @@ class oTMR:
                     _slot = [_slot]
 
                 for _filler in _slot:
-                    # print(f"\t\t{_filler}")
                     if _slot_id != "INSTANCE-OF":
                         filler = _convert_value(_slot_id, _filler)
                         frame.add_filler(_slot_id, filler)
@@ -134,12 +121,16 @@ class oTMR:
                 frame_id = f"{frame}.?"  # TODO: DO CORRECT INDEXING
                 found_ids.add(frame_id)
                 return frame_id
-            else:
-                instance = re.findall(r"-([0-9]+)$", frame)[0]
-                frame_id = re.sub(r"-[0-9]+$", ".%s" % instance, frame)
-                frame_id = f"{frame_id}"
-                found_ids.add(frame_id)
-                return frame_id
+            else:  # NOTE: HACK TO MAKE FRAMES LIKE HUMAN-1 and HUMAN.1 work...
+                if "." not in frame:
+                    instance = re.findall(r"-([0-9]+)$", frame)[0]
+                    frame_id = re.sub(r"-[0-9]+$", ".%s" % instance, frame)
+                    frame_id = f"{frame_id}"
+                    found_ids.add(frame_id)
+                    return frame_id
+                else:
+                    found_ids.add(frame)
+                    return frame
 
         def _convert_value(_property, value):
             if isinstance(value, str):
@@ -169,7 +160,8 @@ class oTMR:
         return otmr
 
     def __iter__(self):
-        return iter(self.frames)
+        for _, v in self.frames.items():
+            yield v
 
     def __getitem__(self, item):
         if isinstance(item, str):
@@ -201,6 +193,13 @@ class TMRFrame:
         self.properties = {}
         self.resolutions = set()  # List of ids that this frame resolves to
         self.senses = []
+
+    def get_concept(self):
+        return self.concept
+
+    def get_properties(self):
+        for k, v in self.properties.items():
+            yield k, v
 
     def add_filler(self, property: str, filler: Any) -> "TMRFrame":
         if property not in self.properties:
@@ -255,7 +254,7 @@ class TMRFrame:
 
 if __name__ == "__main__":
 
-    with open("../tests/resources/sample-TMRs.txt", "r") as file:
+    with open("../../tests/resources/sample-TMRs.txt", "r") as file:
         data = file.read()
         tmrs = ast.literal_eval(data)
 
