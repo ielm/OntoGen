@@ -6,10 +6,8 @@ from ontogen.knowledge.lexicon import *
 from ontogen.config import OntoGenConfig
 from lex.api import LexiconAPI
 
-from json import loads, dumps
 from typing import Tuple, List
 from enum import Enum
-
 from pprint import pprint
 
 SPECIAL_FRAMES = ["MEANING-PROCEDURE", "REQUEST-ACTION"]
@@ -30,7 +28,6 @@ class CandidateCompiler:
 
     def run(self, report: Report):
         lex = self.lexicalize(report.get_otmr())
-        # pprint(lex)
         candidates = list(self.compile_candidates(*lex))
         report.set_candidates(candidates)
 
@@ -68,10 +65,10 @@ class CandidateCompiler:
             self.lexicon.sense(s["SENSE"]) for s in LexiconAPI().sem_search(concept)
         ]
         if local:
-            from ontogen.knowledge.local.lexicon import Lexicon as LocalLex
+            from ontogen.knowledge.local.lexicon import Lexicon as LocalLexicon
 
             found = []
-            for lemma, lexemes in LocalLex.items():
+            for lemma, lexemes in LocalLexicon.items():
                 for instance, lexeme in lexemes.items():
                     if concept in lexeme["SEM-STRUC"]:
                         lexeme["SENSE"] = instance
