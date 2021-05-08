@@ -1,0 +1,4 @@
+recursive-include ontogen/ *.knowledge
+recursive-include ontogen/ *.lark
+recursive-include ontogen/ *.html
+recursive-include ontogen/ *.js
