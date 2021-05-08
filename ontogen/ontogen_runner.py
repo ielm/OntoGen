@@ -1,114 +1,129 @@
+from ontogen.engine.preprocessor import Preprocessor
+from ontogen.engine.compiler import CandidateCompiler
+from ontogen.engine.realizer import Realizer
+from ontogen.engine.report import Report
 from ontogen.engine.otmr import oTMR
+from ontogen.knowledge.ontology import Ontology
+from ontogen.knowledge.lexicon import Lexicon
+from ontogen.config import OntoGenConfig
 
-from lex.lexicon import Lexicon
-from ont.ontology import Ontology
-from ontograph import graph
-
-from ontogen.knowledge.lexstuff.utils import sem_search
-from ontogen.engine.construction import CombinationBuilder
+# from simplenlg.framework import *  # TODO - make sure imports are right
 
 from typing import Union
-from collections import OrderedDict
+from pprint import pprint
 
 import json
-
-
-"""
-OntoGen is the NLG service module for OntoAgent. 
-
-It is run as an isolated service module which takes input as a GET request an API 
-call. There are two input forms for OntoGen, both via the service API: 
-    - OntoGen is sent a full oTMR as a JSON structure, OR
-    - OntoGen is sent the OntoGraph Frame ID of the oTMR anchor already in shared 
-      memory. 
-
-OntoGen will then follow the generation pipeline and return the generated text per 
-the specified return type, which can be:
-    - A JSON structure containing the input oTMR with the generated text in the "raw"
-      field, OR
-    - An OntoGraph Frame ID of the input oTMR anchor, with the "raw" field modified 
-      in memory by OntoGen. 
-"""
+import sys
+import ast
 
 
 class OntoGenRunner:
     def __init__(
-        self,
-        log: int = 0,
-        dc: int = 0,
-        dmp: int = 0,
-        return_one_result: int = 0,
-        is_robot: int = 0,
-        robot_args: dict = None,
+        self, config: OntoGenConfig, ontology: Ontology = None, lexicon: Lexicon = None
     ):
-        self.log = log  # log process and results
-        self.dc = dc  # display constraint matches
-        self.dmp = dmp  # display meaning procedure
-        self.return_one_result = return_one_result  # return a single generation result
-        self.is_robot = is_robot
-        self.robot_args = robot_args if robot_args is not None else {}
+        self.config = config if config is not None else OntoGenConfig()
+        self.ontology = ontology if ontology is not None else self.config.ontology()
+        self.lexicon = lexicon if lexicon is not None else self.config.lexicon()
 
-    def run(self, otmr: Union[oTMR, OrderedDict, dict, str], debug: bool = False):
-        if isinstance(otmr, str):
-            # check if it's a frame id and create an otmr from the frame, else raise
-            # value error
-            pass
-        # if isinstance(otmr, dict): # Check for instance type later.
+    def run_from_file(self, file: str):
+        f = open(file, "r")
+        otmrs = json.load(f)
+        print("\n Loaded", len(otmrs), "oTMRs.\n")
+        f.close()
 
-        # TODO: COMBINE MULTIPLE INSTANCE ELEMENTS LIKE REQUEST_ACTION}
-        # otmr = self.__process_tmr(otmr)
-        # pprint(otmr)
+        return [self.run(t) for t in otmrs]
 
-        tmrobj = oTMR.instance_from_dict(otmr)
-        print(tmrobj.debug())
-        # for item in tmrobj:
-        #     print(item.debug())
-        # print(tmrobj.root()["AGENT"].singleton().id)
+    def run(self, input_otmr: Union[oTMR, dict]):
+        if isinstance(input_otmr, dict):
+            otmr = oTMR.instance(self.config, input_otmr)
+            otmr.set_ontology(self.ontology)
+            otmr.set_lexicon(self.lexicon)
 
-        # self.build_candidate_combinations(otmr)
+        # Create report for config, otmr, and candidates
+        report = Report(self.config, otmr)
 
-        """ 
-            Will not worry about converting to oTMR yet, this is for the future. Just 
-            get the damn thing working first. 
-        """
-        # if isinstance(otmr, OrderedDict):
-        #     # convert otmr to oTMR
-        #     otmr = oTMR.instance_from_dict(otmr)
-        #     pprint(otmr.root().debug())
+        # Print oTMR to console
+        ignore_print_frames = ["MEANING-PROCEDURE"]
+        pprint(
+            [
+                v.to_dict()
+                for k, v in report.get_otmr().items()
+                if v.concept not in ignore_print_frames
+            ]
+        )
+        print(f"\n{'-' * 80}\n")
 
-        return otmr["sentence"]  # TODO: GET REAL RETURNED VALUE
+        # Preprocess - resolve any MPs and reference frames
+        Preprocessor(self.config).run(report)
 
-    # @staticmethod
-    # def build_candidate_combinations(otmr):
-    #     # Find candidate constructions for each frame in otmr
-    #     sem_matches = {}
-    #     num_items = 0
-    #     for key, element in otmr["tmr"].items():
-    #         concept = key.rsplit("-", 1)[0]
-    #         sem_matches[concept] = sem_search(concept)
-    #         num_items += 1
+        print("Candidate Reduction:")
+        # Select and compile candidate constructions
+        CandidateCompiler(self.config, self.ontology, self.lexicon).run(report)
 
-    #     # [[<candidates for tmr frame #1>], [<...frame #2>], [<...frame #3>], ...]
-    #     temp_candidates = []
-    #     for key1, _element in sem_matches.items():
-    #         # print(key1)
-    #         temp_element = []
-    #         for key2, _candidate in _element.items():
-    #             # print("\t", key2)
-    #             # print(_candidate.keys())
-    #             temp_element.append({key2: _candidate})
-    #         temp_candidates.append(temp_element)
+        # Print selected Realization Candidates
+        print("\nRealization Candidates:")
+        pprint(report.get_candidates())
 
-    #     res = list(combine_candidates(*temp_candidates))
-    #     return res
+        print("\nRealizations:")
+        # Generate Sentences for Viable Candidates
+        for realization_candidate in report.get_candidates():
+            Realizer(self.config).run(realization_candidate)
 
-    def __process_tmr(otmr):
-        pass
+        # Select the Best Candidate Utterance
+
+        return report
 
 
 if __name__ == "__main__":
-    with open("knowledge/sample_otmrs/Could_you_get_the_red_block.json", "r") as file:
-        print(file)
-        data = json.load(file, object_pairs_hook=OrderedDict)
 
-    OntoGenRunner().run(data)
+    # Handle argument parsing
+    arguments = sys.argv
+    if len(arguments) < 2 or (
+        len(arguments) == 2 and arguments[1].startswith("config=")
+    ):
+        print("Correct usage: runner.py tmr_index")
+        print("Optional config parameter: runner.py config=ontogen.yml tmr_index")
+    arguments = arguments[1:]
+
+    # Build config with argument values
+    config = OntoGenConfig()
+    if arguments[0].startswith("config="):
+        config_file = arguments[1].replace("config=", "")
+        config = OntoGenConfig().from_file(config_file)
+        arguments = arguments[1:]
+
+    # # Read sample TMRs from file
+    # with open("../tests/resources/driving_tmrs.txt", "r") as file:
+    #     data = file.read()
+    #     tmrs = ast.literal_eval(data)
+
+    # tmr_index = int(arguments[0])
+    # temp = tmrs[tmr_index]["results"][0]["TMR"]
+    # tmr = {"sentence": tmrs[tmr_index]["sentence"], "tmr": {}}
+
+    # for key in temp.keys():
+    #     if key.lower() == key:
+    #         # print(f"---skipping--- {key}: \t {temp[key]}")
+    #         continue  # Skip non-frame elements
+    #     tmr["tmr"][key] = temp[key]
+
+    with open("../tests/resources/simple_tmrs.txt", "r") as file:
+        data = file.read()
+        tmrs = ast.literal_eval(data)
+
+    tmr_index = int(arguments[0])
+    tmr = tmrs[tmr_index]
+
+    # == DEV PRINTS == #
+    print(f"TMR FOR: {tmr['sentence']}")
+    # pprint(tmr["tmr"])
+    print(f"{'-'*80}\n")
+
+    # Load knowledge and build OntoGen runner with config
+    config.load_knowledge()
+    runner = OntoGenRunner(
+        config,
+    )
+
+    # Run OntoGen runner
+    results = runner.run(tmr["tmr"])

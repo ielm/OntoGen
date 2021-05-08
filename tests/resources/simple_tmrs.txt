@@ -1,0 +1,968 @@
+[
+  {
+    "sentence": "He fixed the broken door.",
+    "tmr": {
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1,
+        "GENDER": [
+          "MALE"
+        ]
+      },
+      "REPAIR.1": {
+        "id": "@TMR.REPAIR.1",
+        "concept": "REPAIR",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.DOOR.1"
+        ],
+        "TIME": [
+          [
+            "<",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "DOOR.1": {
+        "id": "@TMR.DOOR.1",
+        "concept": "DOOR",
+        "instance": 1,
+        "AESTHETIC-ATTRIBUTE": [
+          0.1
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.DOOR.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "He fixed the broiler chicken.",
+    "tmr": {
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1,
+        "GENDER": [
+          "MALE"
+        ]
+      },
+      "PREPARE-INGESTIBLE.1": {
+        "id": "@TMR.PREPARE-INGESTIBLE.1",
+        "concept": "PREPARE-INGESTIBLE",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.BROILER-CHICKEN.1"
+        ],
+        "TIME": [
+          [
+            "<",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "BROILER-CHICKEN.1": {
+        "id": "@TMR.BROILER-CHICKEN.1",
+        "concept": "BROILER-CHICKEN",
+        "instance": 1
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.BROILER-CHICKEN.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "He fixed the bookcase to the wall.",
+    "tmr": {
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1,
+        "GENDER": [
+          "MALE"
+        ]
+      },
+      "FASTEN.1": {
+        "id": "@TMR.FASTEN.1",
+        "concept": "FASTEN",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.BOOKCASE.1"
+        ],
+        "DESTINATION": [
+          "@TMR.WALL.1"
+        ],
+        "TIME": [
+          [
+            "<",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "BOOKCASE.1": {
+        "id": "@TMR.BOOKCASE.1",
+        "concept": "BOOKCASE",
+        "instance": 1
+      },
+      "WALL.1": {
+        "id": "@TMR.WALL.1",
+        "concept": "WALL",
+        "instance": 1
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.BOOKCASE.1"
+        ]
+      },
+      "MEANING-PROCEDURE.2": {
+        "id": "@TMR.MEANING-PROCEDURE.2",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 2,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.WALL.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "He fixed his attention on pedology.",
+    "tmr": {
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1,
+        "GENDER": [
+          "MALE"
+        ]
+      },
+      "PAY-ATTENTION.1": {
+        "id": "@TMR.PAY-ATTENTION.1",
+        "concept": "PAY-ATTENTION",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.SCIENCE.1"
+        ],
+        "TIME": [
+          [
+            "<",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "HUMAN.2": {
+        "id": "@TMR.HUMAN.2",
+        "concept": "HUMAN",
+        "instance": 2,
+        "GENDER": [
+          "MALE"
+        ]
+      },
+      "SCIENCE.1": {
+        "id": "@TMR.SCIENCE.1",
+        "concept": "SCIENCE",
+        "instance": 1,
+        "FIELD-STUDIES-AREA": [
+          "SOIL"
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.HUMAN.2",
+          "SG-1-ALGORITHM"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Fix the ugly door.",
+    "tmr": {
+      "REPAIR.1": {
+        "id": "@TMR.REPAIR.1",
+        "concept": "REPAIR",
+        "instance": 1,
+        "THEME": [
+          "@TMR.DOOR.1"
+        ],
+        "AGENT": [
+          "*HEARER*"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "AGENT": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.REPAIR.1"
+        ]
+      },
+      "DOOR.1": {
+        "id": "@TMR.DOOR.1",
+        "concept": "DOOR",
+        "instance": 1,
+        "HOSTILITY": [
+          [
+            ">",
+            0.7
+          ]
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.DOOR.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Fix the bookcase to the wall.",
+    "tmr": {
+      "FASTEN.1": {
+        "id": "@TMR.FASTEN.1",
+        "concept": "FASTEN",
+        "instance": 1,
+        "THEME": [
+          "@TMR.BOOKCASE.1"
+        ],
+        "DESTINATION": [
+          "@TMR.WALL.1"
+        ],
+        "AGENT": [
+          "*HEARER*"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "tmr_root": 1,
+        "AGENT": [
+          "*SPEAKER*"
+        ],
+        "BENEFICIARY": [
+          "*HEARER*"
+        ],
+        "THEME": [
+          "@TMR.FASTEN.1"
+        ]
+      },
+      "BOOKCASE.1": {
+        "id": "@TMR.BOOKCASE.1",
+        "concept": "BOOKCASE",
+        "instance": 1
+      },
+      "WALL.1": {
+        "id": "@TMR.WALL.1",
+        "concept": "WALL",
+        "instance": 1
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.BOOKCASE.1"
+        ]
+      },
+      "MEANING-PROCEDURE.2": {
+        "id": "@TMR.MEANING-PROCEDURE.2",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 2,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.WALL.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Fix your attention on pedology.",
+    "tmr": {
+      "PAY-ATTENTION.1": {
+        "id": "@TMR.PAY-ATTENTION.1",
+        "concept": "PAY-ATTENTION",
+        "instance": 1,
+        "THEME": [
+          "@TMR.SCIENCE.1"
+        ],
+        "AGENT": [
+          "*HEARER*"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "AGENT": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.PAY-ATTENTION.1"
+        ]
+      },
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1,
+        "COREF": [
+          "*HEARER*"
+        ]
+      },
+      "SCIENCE.1": {
+        "id": "@TMR.SCIENCE.1",
+        "concept": "SCIENCE",
+        "instance": 1,
+        "FIELD-STUDIES-AREA": [
+          "SOIL"
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.HUMAN.1",
+          "SG-1-ALGORITHM"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Please fix the ugly door.",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "THEME": [
+          "@TMR.REPAIR.1"
+        ],
+        "POLITENESS": [
+          0.7
+        ]
+      },
+      "REPAIR.1": {
+        "id": "@TMR.REPAIR.1",
+        "concept": "REPAIR",
+        "instance": 1,
+        "THEME": [
+          "@TMR.DOOR.1"
+        ],
+        "AGENT": [
+          "*HEARER*"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "REQUEST-ACTION.2": {
+        "id": "@TMR.REQUEST-ACTION.2",
+        "concept": "REQUEST-ACTION",
+        "instance": 2,
+        "AGENT": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.REPAIR.1"
+        ]
+      },
+      "DOOR.1": {
+        "id": "@TMR.DOOR.1",
+        "concept": "DOOR",
+        "instance": 1,
+        "AESTHETIC-ATTRIBUTE": [
+          0.1
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.DOOR.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Please fix the broiler chicken.",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "THEME": [
+          "@TMR.REPAIR.1"
+        ],
+        "POLITENESS": [
+          0.7
+        ]
+      },
+      "REPAIR.1": {
+        "id": "@TMR.REPAIR.1",
+        "concept": "REPAIR",
+        "instance": 1,
+        "THEME": [
+          "@TMR.BROILER-CHICKEN.1"
+        ],
+        "AGENT": [
+          "*HEARER*"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "REQUEST-ACTION.2": {
+        "id": "@TMR.REQUEST-ACTION.2",
+        "concept": "REQUEST-ACTION",
+        "instance": 2,
+        "AGENT": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.REPAIR.1"
+        ]
+      },
+      "BROILER-CHICKEN.1": {
+        "id": "@TMR.BROILER-CHICKEN.1",
+        "concept": "BROILER-CHICKEN",
+        "instance": 1
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.BROILER-CHICKEN.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Please fix the bookcase to the wall.",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "THEME": [
+          "@TMR.FASTEN.1"
+        ],
+        "POLITENESS": [
+          0.7
+        ]
+      },
+      "FASTEN.1": {
+        "id": "@TMR.FASTEN.1",
+        "concept": "FASTEN",
+        "instance": 1,
+        "THEME": [
+          "@TMR.BOOKCASE.1"
+        ],
+        "DESTINATION": [
+          "@TMR.WALL-OF-ORGAN.1"
+        ],
+        "AGENT": [
+          "*HEARER*"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "REQUEST-ACTION.2": {
+        "id": "@TMR.REQUEST-ACTION.2",
+        "concept": "REQUEST-ACTION",
+        "instance": 2,
+        "AGENT": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.FASTEN.1"
+        ]
+      },
+      "BOOKCASE.1": {
+        "id": "@TMR.BOOKCASE.1",
+        "concept": "BOOKCASE",
+        "instance": 1
+      },
+      "WALL-OF-ORGAN.1": {
+        "id": "@TMR.WALL-OF-ORGAN.1",
+        "concept": "WALL-OF-ORGAN",
+        "instance": 1
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.BOOKCASE.1"
+        ]
+      },
+      "MEANING-PROCEDURE.2": {
+        "id": "@TMR.MEANING-PROCEDURE.2",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 2,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.WALL-OF-ORGAN.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Please fix your attention on pedology.",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "THEME": [
+          "@TMR.PAY-ATTENTION.1"
+        ],
+        "POLITENESS": [
+          0.7
+        ]
+      },
+      "PAY-ATTENTION.1": {
+        "id": "@TMR.PAY-ATTENTION.1",
+        "concept": "PAY-ATTENTION",
+        "instance": 1,
+        "THEME": [
+          "@TMR.SCIENCE.1"
+        ],
+        "AGENT": [
+          "*HEARER*"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "REQUEST-ACTION.2": {
+        "id": "@TMR.REQUEST-ACTION.2",
+        "concept": "REQUEST-ACTION",
+        "instance": 2,
+        "AGENT": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.PAY-ATTENTION.1"
+        ]
+      },
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1,
+        "COREF": [
+          "*HEARER*"
+        ]
+      },
+      "SCIENCE.1": {
+        "id": "@TMR.SCIENCE.1",
+        "concept": "SCIENCE",
+        "instance": 1,
+        "FIELD-STUDIES-AREA": [
+          "SOIL"
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.HUMAN.1",
+          "SG-1-ALGORITHM"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Could you fix the ugly door?",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "AGENT-1": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.REPAIR.1"
+        ]
+      },
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1
+      },
+      "REPAIR.1": {
+        "id": "@TMR.REPAIR.1",
+        "concept": "REPAIR",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1",
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.DOOR.1"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "DOOR.1": {
+        "id": "@TMR.DOOR.1",
+        "concept": "DOOR",
+        "instance": 1,
+        "AESTHETIC-ATTRIBUTE": [
+          0.1
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ]
+      },
+      "MEANING-PROCEDURE.2": {
+        "id": "@TMR.MEANING-PROCEDURE.2",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 2,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.DOOR.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Could you fix the broiler chicken?",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "AGENT-1": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.PREPARE-INGESTIBLE.1"
+        ]
+      },
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1
+      },
+      "PREPARE-INGESTIBLE.1": {
+        "id": "@TMR.PREPARE-INGESTIBLE.1",
+        "concept": "PREPARE-INGESTIBLE",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1",
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.BROILER-CHICKEN.1"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "BROILER-CHICKEN.1": {
+        "id": "@TMR.BROILER-CHICKEN.1",
+        "concept": "BROILER-CHICKEN",
+        "instance": 1
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ]
+      },
+      "MEANING-PROCEDURE.2": {
+        "id": "@TMR.MEANING-PROCEDURE.2",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 2,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.BROILER-CHICKEN.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Could you fix the bookcase to the wall?",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "AGENT-1": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.FASTEN.1"
+        ]
+      },
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1
+      },
+      "FASTEN.1": {
+        "id": "@TMR.FASTEN.1",
+        "concept": "FASTEN",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1",
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.BOOKCASE.1"
+        ],
+        "DESTINATION": [
+          "@TMR.WALL.1"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "BOOKCASE.1": {
+        "id": "@TMR.BOOKCASE.1",
+        "concept": "BOOKCASE",
+        "instance": 1
+      },
+      "WALL.1": {
+        "id": "@TMR.WALL.1",
+        "concept": "WALL",
+        "instance": 1
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ]
+      },
+      "MEANING-PROCEDURE.2": {
+        "id": "@TMR.MEANING-PROCEDURE.2",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 2,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.BOOKCASE.1"
+        ]
+      },
+      "MEANING-PROCEDURE.3": {
+        "id": "@TMR.MEANING-PROCEDURE.3",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 3,
+        "NAME": [
+          "RESOLVE-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.WALL.1"
+        ]
+      }
+    }
+  },
+  {
+    "sentence": "Could you fix your attention on pedology?",
+    "tmr": {
+      "REQUEST-ACTION.1": {
+        "id": "@TMR.REQUEST-ACTION.1",
+        "concept": "REQUEST-ACTION",
+        "instance": 1,
+        "AGENT-1": [
+          "*SPEAKER*"
+        ],
+        "THEME": [
+          "@TMR.PAY-ATTENTION.1"
+        ]
+      },
+      "HUMAN.1": {
+        "id": "@TMR.HUMAN.1",
+        "concept": "HUMAN",
+        "instance": 1
+      },
+      "PAY-ATTENTION.1": {
+        "id": "@TMR.PAY-ATTENTION.1",
+        "concept": "PAY-ATTENTION",
+        "instance": 1,
+        "AGENT": [
+          "@TMR.HUMAN.1",
+          "@TMR.HUMAN.1"
+        ],
+        "THEME": [
+          "@TMR.SCIENCE.1"
+        ],
+        "TIME": [
+          [
+            ">",
+            "FIND-ANCHOR-TIME"
+          ]
+        ]
+      },
+      "HUMAN.2": {
+        "id": "@TMR.HUMAN.2",
+        "concept": "HUMAN",
+        "instance": 2,
+        "COREF": [
+          "*HEARER*"
+        ]
+      },
+      "SCIENCE.1": {
+        "id": "@TMR.SCIENCE.1",
+        "concept": "SCIENCE",
+        "instance": 1,
+        "FIELD-STUDIES-AREA": [
+          "SOIL"
+        ]
+      },
+      "MEANING-PROCEDURE.1": {
+        "id": "@TMR.MEANING-PROCEDURE.1",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 1,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ]
+      },
+      "MEANING-PROCEDURE.2": {
+        "id": "@TMR.MEANING-PROCEDURE.2",
+        "concept": "MEANING-PROCEDURE",
+        "instance": 2,
+        "NAME": [
+          "TRIGGER-REFERENCE"
+        ],
+        "PARAMETERS": [
+          "@TMR.HUMAN.2",
+          "SG-1-ALGORITHM"
+        ]
+      }
+    }
+  }
+]

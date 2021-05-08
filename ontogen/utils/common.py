@@ -1,6 +1,8 @@
 from ontograph.Frame import Frame
 import threading
 
+SPEECH_ACTS = ["REQUEST-ACTION", "REQUEST-INFO", "SPEECH-ACT"]
+
 
 class AnchoredObject(object):
     def __init__(self, anchor: Frame):
